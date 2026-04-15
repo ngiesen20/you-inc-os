@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>YOU INC. — Personal Operating System</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://js.stripe.com/v3/"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap');
+:root{
+  --bg:#f8f7f4;--surface:#fff;--surface2:#f2f1ee;--border:#e4e2dc;--border2:#d4d2cc;
+  --navy:#1a2332;--navy2:#243044;--accent:#1a3a5c;
+  --gold:#8b6914;--gold-light:#f5edd8;--gold-mid:#d4a832;
+  --red:#c0392b;--red-light:#fdf0ef;--yellow:#92610a;--yellow-light:#fef9ed;
+  --green:#1a6b3a;--green-light:#edf7f1;
+  --text:#1a1a1a;--text2:#4a4a4a;--muted:#888;--muted2:#bbb;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;--display:'Playfair Display',serif;
+  --sidebar-w:230px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+
+/* ═══ SCREENS ═══ */
+.screen{display:none;min-height:100vh}
+.screen.active{display:block}
+
+/* ═══════════════════════════════════
+   LANDING PAGE
+═══════════════════════════════════ */
+.land-nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 48px;height:64px;display:flex;align-items:center;justify-content:space-between;background:rgba(248,247,244,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.land-logo{font-family:var(--display);font-size:20px;font-weight:700;color:var(--navy)}
+.land-logo span{color:var(--gold-mid)}
+.land-nav-links{display:flex;align-items:center;gap:28px}
+.land-nav-link{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .15s}
+.land-nav-link:hover{color:var(--navy)}
+.land-nav-cta{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:8px 18px;border-radius:5px;background:var(--navy);color:#fff;border:none;cursor:pointer;transition:all .15s}
+.land-nav-cta:hover{background:var(--navy2)}
+
+/* HERO */
+.hero{padding:160px 48px 100px;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.hero-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.hero-eyebrow::before{content:'';width:32px;height:1px;background:var(--gold-mid)}
+.hero-title{font-family:var(--display);font-size:56px;font-weight:700;line-height:1.08;color:var(--navy);margin-bottom:24px;letter-spacing:-.5px}
+.hero-title em{font-style:italic;color:var(--gold-mid)}
+.hero-sub{font-size:16px;color:var(--text2);line-height:1.7;margin-bottom:36px;max-width:480px}
+.hero-cta-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.hero-cta{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:14px 32px;border-radius:6px;background:var(--navy);color:#fff;border:none;cursor:pointer;transition:all .2s;font-weight:500}
+.hero-cta:hover{background:var(--navy2);transform:translateY(-1px);box-shadow:0 8px 24px rgba(26,35,50,.2)}
+.hero-price{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px}
+.hero-price strong{color:var(--navy);font-size:14px}
+.hero-visual{position:relative}
+.hero-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;box-shadow:0 20px 60px rgba(26,35,50,.1);position:relative;overflow:hidden}
+.hero-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold-mid),var(--navy))}
+.hc-title{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+.hc-domain-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.hc-domain-row:last-child{border-bottom:none}
+.hc-domain-name{font-size:13px;color:var(--text)}
+.hc-badge{font-family:var(--mono);font-size:8px;padding:2px 8px;border-radius:3px;font-weight:600}
+.hc-g{background:var(--green-light);color:var(--green)}.hc-y{background:var(--yellow-light);color:var(--yellow)}.hc-r{background:var(--red-light);color:var(--red)}
+.floating-badge{position:absolute;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.1);font-size:12px;white-space:nowrap}
+.fb1{top:-20px;right:-20px;font-family:var(--mono);font-size:10px;color:var(--green)}
+.fb2{bottom:-16px;left:-20px;font-family:var(--mono);font-size:9px;color:var(--navy)}
+
+/* PROOF BAR */
+.proof-bar{background:var(--navy);padding:20px 48px}
+.proof-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:48px;flex-wrap:wrap}
+.proof-item{text-align:center}
+.proof-num{font-family:var(--display);font-size:28px;font-weight:700;color:#fff;line-height:1}
+.proof-label{font-family:var(--mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:4px}
+
+/* FEATURES */
+.features{padding:100px 48px;max-width:1200px;margin:0 auto}
+.section-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;text-align:center}
+.section-title-lg{font-family:var(--display);font-size:40px;font-weight:700;color:var(--navy);text-align:center;margin-bottom:16px;line-height:1.15}
+.section-sub{font-size:15px;color:var(--muted);text-align:center;max-width:560px;margin:0 auto 60px;line-height:1.6}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.feature-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:28px;transition:all .2s}
+.feature-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.06);transform:translateY(-2px)}
+.feature-icon{font-size:28px;margin-bottom:16px;display:block}
+.feature-name{font-family:var(--display);font-size:18px;font-weight:600;color:var(--navy);margin-bottom:8px}
+.feature-desc{font-size:13px;color:var(--text2);line-height:1.6}
+
+/* WHO */
+.who{background:var(--navy);padding:100px 48px}
+.who-inner{max-width:1200px;margin:0 auto}
+.who-title{font-family:var(--display);font-size:40px;font-weight:700;color:#fff;text-align:center;margin-bottom:16px}
+.who-sub{font-size:15px;color:rgba(255,255,255,.5);text-align:center;margin-bottom:60px}
+.who-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.who-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:28px}
+.who-card-title{font-family:var(--display);font-size:17px;font-weight:600;color:#fff;margin-bottom:10px}
+.who-card-desc{font-size:13px;color:rgba(255,255,255,.5);line-height:1.6}
+.who-not{max-width:600px;margin:48px auto 0;text-align:center;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);letter-spacing:1px;line-height:1.8}
+
+/* HOW IT WORKS */
+.how{padding:100px 48px;max-width:1200px;margin:0 auto}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:60px}
+.step{text-align:center;position:relative}
+.step:not(:last-child)::after{content:'→';position:absolute;right:-12px;top:20px;color:var(--border2);font-size:18px}
+.step-num{width:42px;height:42px;border-radius:50%;background:var(--navy);color:#fff;font-family:var(--display);font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.step-title{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:6px}
+.step-desc{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* DOMAINS */
+.domains{background:var(--surface2);padding:100px 48px}
+.domains-inner{max-width:1200px;margin:0 auto}
+.domains-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:60px}
+.domain-pill{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;text-align:center;transition:all .2s}
+.domain-pill:hover{box-shadow:0 4px 16px rgba(0,0,0,.07);border-color:var(--navy)}
+.domain-pill-icon{font-size:24px;margin-bottom:8px;display:block}
+.domain-pill-name{font-size:13px;font-weight:500;color:var(--navy);margin-bottom:4px}
+.domain-pill-desc{font-size:11px;color:var(--muted);line-height:1.4}
+
+/* PRICING */
+.pricing{padding:100px 48px;max-width:1200px;margin:0 auto;text-align:center}
+.price-box{background:var(--surface);border:2px solid var(--navy);border-radius:16px;padding:48px;max-width:480px;margin:60px auto 0;position:relative;overflow:hidden}
+.price-box::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--gold-mid),var(--navy))}
+.price-tag{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+.price-amount{font-family:var(--display);font-size:72px;font-weight:700;color:var(--navy);line-height:1;margin-bottom:4px}
+.price-amount sup{font-size:32px;vertical-align:super}
+.price-period{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:32px}
+.price-features{text-align:left;margin-bottom:32px}
+.price-feature{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2)}
+.price-feature:last-child{border-bottom:none}
+.price-feature-icon{color:var(--green);font-size:12px;flex-shrink:0}
+.price-cta{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:16px 32px;width:100%;border-radius:6px;background:var(--navy);color:#fff;border:none;cursor:pointer;transition:all .2s;font-weight:500}
+.price-cta:hover{background:var(--navy2);transform:translateY(-1px);box-shadow:0 8px 24px rgba(26,35,50,.2)}
+.price-guarantee{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:14px;letter-spacing:.5px}
+
+/* FAQ */
+.faq{padding:80px 48px;max-width:800px;margin:0 auto}
+.faq-item{border-bottom:1px solid var(--border);padding:20px 0;cursor:pointer}
+.faq-q{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:500;color:var(--navy)}
+.faq-a{font-size:13px;color:var(--text2);line-height:1.6;margin-top:12px;display:none}
+.faq-a.open{display:block}
+.faq-chevron{font-size:12px;color:var(--muted);transition:transform .2s}
+.faq-item.open .faq-chevron{transform:rotate(180deg)}
+
+/* FOOTER */
+.land-footer{background:var(--navy);padding:40px 48px;text-align:center}
+.land-footer-logo{font-family:var(--display);font-size:18px;font-weight:700;color:#fff;margin-bottom:8px}
+.land-footer-logo span{color:var(--gold-mid)}
+.land-footer-sub{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.25);letter-spacing:1px}
+
+/* ═══════════════════════════════════
+   AUTH SCREEN
+═══════════════════════════════════ */
+.auth-screen-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg)}
+.auth-box{background:var(--surface);border-radius:12px;padding:40px;max-width:420px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.auth-logo{font-family:var(--display);font-size:24px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.auth-logo span{color:var(--gold-mid)}
+.auth-sub{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:28px}
+.auth-tabs{display:flex;margin-bottom:24px;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.auth-tab{flex:1;padding:9px;font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;text-align:center;cursor:pointer;background:var(--surface);color:var(--muted);border:none;transition:all .15s}
+.auth-tab.active{background:var(--navy);color:#fff}
+.auth-msg{padding:10px 14px;border-radius:5px;font-size:12px;margin-bottom:14px;display:none}
+.auth-msg.show{display:block}
+.auth-msg.error{background:var(--red-light);border:1px solid rgba(192,57,43,.2);color:var(--red)}
+.auth-msg.success{background:var(--green-light);border:1px solid rgba(26,107,58,.2);color:var(--green)}
+.auth-back{font-family:var(--mono);font-size:9px;color:var(--muted);cursor:pointer;text-align:center;margin-top:16px;letter-spacing:1px}
+.auth-back:hover{color:var(--navy)}
+
+/* ═══════════════════════════════════
+   PAYWALL
+═══════════════════════════════════ */
+.paywall-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg)}
+.paywall-box{background:var(--surface);border-radius:16px;padding:48px;max-width:520px;width:100%;box-shadow:0 4px 32px rgba(0,0,0,.08);text-align:center;position:relative;overflow:hidden}
+.paywall-box::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--gold-mid),var(--navy))}
+.paywall-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+.paywall-title{font-family:var(--display);font-size:32px;font-weight:700;color:var(--navy);margin-bottom:8px;line-height:1.15}
+.paywall-sub{font-size:14px;color:var(--muted);margin-bottom:32px;line-height:1.6}
+.paywall-price-row{display:flex;align-items:baseline;justify-content:center;gap:6px;margin-bottom:8px}
+.paywall-price{font-family:var(--display);font-size:56px;font-weight:700;color:var(--navy);line-height:1}
+.paywall-price-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px}
+.paywall-once{font-family:var(--mono);font-size:9px;color:var(--green);letter-spacing:1px;margin-bottom:28px}
+.paywall-features{text-align:left;margin-bottom:28px;background:var(--bg);border-radius:8px;padding:16px 20px}
+.paywall-feature{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13px;color:var(--text2);border-bottom:1px solid var(--border)}
+.paywall-feature:last-child{border-bottom:none}
+.paywall-cta{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:15px 32px;width:100%;border-radius:6px;background:var(--navy);color:#fff;border:none;cursor:pointer;transition:all .2s;font-weight:500;margin-bottom:10px}
+.paywall-cta:hover{background:var(--navy2);transform:translateY(-1px)}
+.paywall-note{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.5px}
+.paywall-signout{font-family:var(--mono);font-size:9px;color:var(--muted);cursor:pointer;margin-top:16px;display:inline-block}
+.paywall-signout:hover{color:var(--red)}
+
+/* ═══════════════════════════════════
+   APP (portal)
+═══════════════════════════════════ */
+.shell{display:flex;min-height:100vh}
+.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--navy);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:transform .25s ease}
+.logo{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between}
+.logo-mark{font-family:var(--display);font-size:20px;font-weight:700;color:#fff}
+.logo-mark span{color:var(--gold-mid)}
+.logo-sub{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;margin-top:3px}
+.nav{padding:10px 0;flex:1;overflow-y:auto}
+.nav-section{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.25);letter-spacing:3px;text-transform:uppercase;padding:12px 20px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 20px;cursor:pointer;font-size:12.5px;color:rgba(255,255,255,.5);transition:all .15s;border-left:2px solid transparent;user-select:none;-webkit-tap-highlight-color:transparent}
+.nav-item:hover{color:rgba(255,255,255,.9);background:rgba(255,255,255,.05)}
+.nav-item.active{color:#fff;border-left-color:var(--gold-mid);background:rgba(255,255,255,.08)}
+.nav-icon{font-size:13px;width:16px;text-align:center}
+.nav-badge{margin-left:auto;font-size:8px;font-family:var(--mono);padding:2px 5px;border-radius:3px;font-weight:600}
+.nb-g{background:var(--green-light);color:var(--green)}.nb-y{background:var(--yellow-light);color:var(--yellow)}.nb-r{background:var(--red-light);color:var(--red)}
+.sidebar-footer{padding:14px 20px;border-top:1px solid rgba(255,255,255,.08);font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3)}
+.sidebar-user{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:var(--gold-mid);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:11px;font-weight:700;color:var(--navy);flex-shrink:0}
+.user-name{font-size:10px;color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.signout-btn{background:none;border:none;cursor:pointer;font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.25);padding:0;transition:color .15s;text-transform:uppercase;letter-spacing:1px}
+.signout-btn:hover{color:rgba(255,255,255,.6)}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99}
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:8px;flex-direction:column;gap:4px}
+.hamburger span{display:block;width:18px;height:1.5px;background:var(--text);border-radius:1px;transition:all .2s}
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 1px 3px rgba(0,0,0,.04);gap:12px}
+.topbar-left{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.page-title{font-family:var(--display);font-size:18px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-date{font-family:var(--mono);font-size:10px;color:var(--muted);white-space:nowrap}
+.topbar-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.status-pill{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:20px;letter-spacing:.5px;font-weight:500;white-space:nowrap}
+.sp-green{background:var(--green-light);color:var(--green);border:1px solid rgba(26,107,58,.2)}
+.sp-yellow{background:var(--yellow-light);color:var(--yellow);border:1px solid rgba(146,97,10,.2)}
+.content{padding:24px;flex:1}
+.page{display:none}.page.active{display:block}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.card-title{font-family:var(--mono);font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;font-weight:500}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stat-value{font-family:var(--display);font-size:36px;font-weight:700;letter-spacing:-.5px;line-height:1;color:var(--navy)}
+.stat-label{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:5px}
+.stat-delta{font-family:var(--mono);font-size:10px;margin-top:6px}
+.up{color:var(--green)}.down{color:var(--red)}.flat{color:var(--muted)}
+input,textarea,select{background:var(--surface);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:var(--sans);font-size:13px;padding:8px 12px;width:100%;outline:none;transition:border-color .15s;-webkit-appearance:none}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,58,92,.07)}
+textarea{resize:vertical;min-height:70px}
+.form-row{margin-bottom:12px}
+.form-label{font-family:var(--mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block;font-weight:500}
+.btn{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:9px 18px;border:none;border-radius:5px;cursor:pointer;transition:all .15s;font-weight:500;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy2)}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-outline{background:transparent;color:var(--accent);border:1px solid var(--accent)}.btn-outline:hover{background:rgba(26,58,92,.05)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{background:var(--surface2)}
+.btn-sm{padding:5px 10px;font-size:8px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title-sm{font-family:var(--display);font-size:17px;font-weight:600;color:var(--navy)}
+.section-action{font-family:var(--mono);font-size:9px;color:var(--accent);cursor:pointer;letter-spacing:1px;background:none;border:none;padding:0;font-weight:500}
+.mit-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.mit-item:last-child{border-bottom:none}
+.mit-check{width:18px;height:18px;border:1.5px solid var(--border2);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-size:10px;color:#fff;min-width:18px;min-height:18px}
+.mit-check.checked{background:var(--accent);border-color:var(--accent)}
+.mit-text{font-size:13px;flex:1;min-width:0;color:var(--text2)}.mit-text.done{text-decoration:line-through;color:var(--muted2)}
+.mit-tag{font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:3px;background:var(--surface2);color:var(--muted);letter-spacing:.5px;flex-shrink:0;border:1px solid var(--border)}
+.icon-btn{background:none;border:none;cursor:pointer;color:var(--muted2);font-size:13px;padding:4px;border-radius:3px;transition:all .15s;flex-shrink:0;min-width:26px;min-height:26px;display:flex;align-items:center;justify-content:center}
+.icon-btn:hover{color:var(--red);background:var(--red-light)}
+.domain-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.d-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.d-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.07);transform:translateY(-1px)}
+.d-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.d-card.green::before{background:var(--green)}.d-card.yellow::before{background:var(--gold-mid)}.d-card.red::before{background:var(--red)}
+.d-name{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.d-icon{font-size:16px;margin-bottom:7px;display:block}
+.d-status{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:1px}
+.d-card.green .d-status{color:var(--green)}.d-card.yellow .d-status{color:var(--yellow)}.d-card.red .d-status{color:var(--red)}
+.d-note{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.3}
+.kpi-wrap{margin-bottom:12px}
+.kpi-header{display:flex;justify-content:space-between;margin-bottom:5px}
+.kpi-name{font-size:12px;color:var(--text2)}.kpi-val{font-family:var(--mono);font-size:10px;color:var(--navy);font-weight:500}
+.kpi-track{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;border:1px solid var(--border)}
+.kpi-fill{height:100%;border-radius:3px;transition:width .8s ease}
+.kpi-fill.green{background:var(--green)}.kpi-fill.yellow{background:var(--gold-mid)}.kpi-fill.red{background:var(--red)}
+.alert{padding:10px 14px;border-radius:6px;font-size:12px;margin-bottom:12px;display:flex;align-items:flex-start;gap:9px;line-height:1.5}
+.alert.red{background:var(--red-light);border:1px solid rgba(192,57,43,.2);color:var(--red)}
+.alert.yellow{background:var(--yellow-light);border:1px solid rgba(146,97,10,.2);color:var(--yellow)}
+.alert.green{background:var(--green-light);border:1px solid rgba(26,107,58,.2);color:var(--green)}
+.alert.blue{background:#eef4fb;border:1px solid rgba(26,58,92,.15);color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{font-family:var(--mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-align:left;padding:0 12px 9px 0;border-bottom:2px solid var(--border);font-weight:500}
+td{padding:10px 12px 10px 0;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.person-row{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)}
+.person-row:last-child{border-bottom:none}
+.person-avatar{width:34px;height:34px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.person-info{flex:1;min-width:0}
+.person-name{font-size:13px;font-weight:500}.person-meta{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px}
+.person-next{font-size:11px;color:var(--muted);margin-top:2px;font-style:italic}
+.person-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+.days-badge{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;white-space:nowrap;font-weight:500}
+.days-badge.overdue{background:var(--red-light);color:var(--red);border:1px solid rgba(192,57,43,.2)}
+.days-badge.soon{background:var(--yellow-light);color:var(--yellow);border:1px solid rgba(146,97,10,.15)}
+.days-badge.ok{background:var(--green-light);color:var(--green);border:1px solid rgba(26,107,58,.15)}
+.crm-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.atom-card{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:13px 15px;margin-bottom:9px;transition:all .15s}
+.atom-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.atom-source{font-family:var(--mono);font-size:8px;color:var(--gold);letter-spacing:1.5px;margin-bottom:5px;font-weight:500;text-transform:uppercase}
+.atom-insight{font-size:13px;line-height:1.55;margin-bottom:7px}
+.atom-deploy{font-size:11px;color:var(--muted);font-style:italic}
+.atom-footer{display:flex;gap:6px;margin-top:9px;align-items:center;flex-wrap:wrap}
+.atom-domain{font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:3px;background:var(--surface2);color:var(--muted);letter-spacing:.5px;border:1px solid var(--border)}
+.badge-dep{font-family:var(--mono);font-size:8px;padding:2px 8px;border-radius:3px;cursor:pointer;transition:all .15s;margin-left:auto;font-weight:500}
+.badge-dep.yes{background:var(--green-light);color:var(--green);border:1px solid rgba(26,107,58,.2)}
+.badge-dep.no{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}.badge-dep.no:hover{background:var(--green-light);color:var(--green)}
+.win-entry{background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--navy);border-radius:0 6px 6px 0;padding:9px 12px;margin-bottom:7px;font-size:13px;color:var(--text2);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sprint-obj{padding:12px 0;border-bottom:1px solid var(--border)}.sprint-obj:last-child{border-bottom:none}
+.sprint-obj-header{display:flex;align-items:flex-start;gap:9px;margin-bottom:7px}
+.sprint-obj-num{font-family:var(--display);font-size:18px;font-weight:700;color:var(--navy);line-height:1;width:24px;flex-shrink:0;opacity:.35}
+.sprint-obj-text{font-size:12.5px;flex:1;line-height:1.45;color:var(--text2)}
+.sprint-bar-row{display:flex;align-items:center;gap:10px}
+.sprint-progress{height:4px;background:var(--surface2);border-radius:3px;overflow:hidden;flex:1;border:1px solid var(--border)}
+.sprint-fill{height:100%;border-radius:3px;transition:width .6s}
+.sprint-pct{font-family:var(--mono);font-size:9px;color:var(--muted);width:30px;text-align:right;flex-shrink:0}
+.sprint-edit-btn{font-family:var(--mono);font-size:8px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:3px 7px;cursor:pointer;transition:all .15s}
+.sprint-edit-btn:hover{border-color:var(--accent);color:var(--accent)}
+.sop-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:9px;cursor:pointer;transition:all .15s}
+.sop-card.triggered{border-left:3px solid var(--red);border-radius:0 6px 6px 0;background:var(--red-light)}
+.sop-id{font-family:var(--mono);font-size:8px;color:var(--gold);letter-spacing:1.5px;margin-bottom:4px;font-weight:500}
+.sop-name{font-size:13px;font-weight:500;margin-bottom:7px}
+.sop-meta{display:flex;gap:5px;flex-wrap:wrap}
+.sop-tag{font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:3px;background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.sop-tag.red{background:var(--red-light);color:var(--red)}
+.sop-detail{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--text2);line-height:1.65}
+.sop-detail.open{display:block}
+.inline-form{display:none;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;margin-bottom:14px}
+.inline-form.open{display:block}
+.modal-overlay{position:fixed;inset:0;background:rgba(26,35,50,.5);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);padding:20px}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:28px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.modal-title{font-family:var(--display);font-size:18px;font-weight:600;color:var(--navy);margin-bottom:18px}
+.modal-footer{display:flex;gap:8px;margin-top:18px;justify-content:flex-end}
+input[type=range]{-webkit-appearance:none;height:4px;background:var(--border2);border-radius:3px;outline:none;padding:0;border:none;box-shadow:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--navy);cursor:pointer}
+.tl-item{position:relative;padding:0 0 16px 18px}
+.tl-item::before{content:'';position:absolute;left:4px;top:8px;bottom:-2px;width:1px;background:var(--border)}
+.tl-item:last-child::before{display:none}
+.tl-dot{position:absolute;left:0;top:4px;width:8px;height:8px;border-radius:50%;background:var(--border2);border:2px solid var(--bg)}
+.tl-dot.navy{background:var(--navy)}.tl-dot.green{background:var(--green)}
+.tl-time{font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:2px}
+.tl-text{font-size:13px}.tl-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.mb-16{margin-bottom:16px}.mb-20{margin-bottom:20px}
+.flex{display:flex}.gap-8{gap:8px}.gap-12{gap:12px}.items-center{align-items:center}
+.text-muted{color:var(--muted)}.text-mono{font-family:var(--mono);font-size:10px}
+.empty-state{text-align:center;padding:24px;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.5px;border:1px dashed var(--border2);border-radius:6px;margin:8px 0}
+.loading{text-align:center;padding:20px;font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px}
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.toast{position:fixed;bottom:20px;right:20px;font-family:var(--mono);font-size:10px;letter-spacing:.5px;padding:10px 16px;border-radius:6px;z-index:9999;animation:fadeUp .2s ease;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.tg{background:var(--navy);color:#fff}.tgg{background:var(--green);color:#fff}.tr{background:var(--red);color:#fff}
+
+/* ONBOARDING */
+.ob-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg)}
+.ob-box{background:var(--surface);border-radius:12px;padding:40px;max-width:560px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.ob-progress{display:flex;gap:6px;margin-bottom:28px}
+.ob-dot{height:3px;flex:1;border-radius:2px;background:var(--border);transition:background .3s}
+.ob-dot.done{background:var(--navy)}.ob-dot.active{background:var(--gold-mid)}
+.ob-title{font-family:var(--display);font-size:22px;font-weight:600;color:var(--navy);margin-bottom:6px}
+.ob-desc{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.5}
+.ob-nav{display:flex;justify-content:space-between;margin-top:24px;align-items:center}
+.ob-step-lbl{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px}
+
+/* MOBILE */
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;gap:40px;padding:120px 24px 60px}
+  .hero-visual{display:none}
+  .features-grid{grid-template-columns:1fr 1fr}
+  .who-grid{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr 1fr}
+  .step:not(:last-child)::after{display:none}
+  .domains-grid{grid-template-columns:repeat(2,1fr)}
+  .land-nav{padding:0 24px}
+  .proof-inner{gap:28px}
+  .features,.who,.how,.domains,.pricing,.faq{padding:60px 24px}
+}
+@media(max-width:768px){
+  :root{--sidebar-w:0px}
+  .sidebar{transform:translateX(-230px);width:230px}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.open{display:block}
+  .main{margin-left:0}
+  .hamburger{display:flex}
+  .topbar{padding:0 16px}
+  .topbar-date{display:none}
+  .content{padding:16px}
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+  .grid-2{grid-template-columns:1fr}
+  .domain-grid{grid-template-columns:repeat(2,1fr)}
+  .modal-box{padding:20px}
+  .topbar-right .status-pill:first-child{display:none}
+  .features-grid{grid-template-columns:1fr}
+  .land-nav-links{display:none}
+}
+@media(max-width:420px){
+  .hero-title{font-size:38px}
+  .section-title-lg{font-size:28px}
+  .price-amount{font-size:56px}
+  .grid-4{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ LANDING PAGE ═══ -->
+<div class="screen active" id="screen-landing">
+  <nav class="land-nav">
+    <div class="land-logo">YOU <span>INC.</span></div>
+    <div class="land-nav-links">
+      <a href="#features" class="land-nav-link">Features</a>
+      <a href="#domains" class="land-nav-link">Domains</a>
+      <a href="#pricing" class="land-nav-link">Pricing</a>
+      <a href="#faq" class="land-nav-link">FAQ</a>
+    </div>
+    <button class="land-nav-cta" onclick="showAuth()">GET ACCESS — $10</button>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">Built for high-performers</div>
+      <h1 class="hero-title">Run your life like a <em>CEO.</em></h1>
+      <p class="hero-sub">The personal operating system built for IB analysts, consultants, and finance professionals running 80-100 hour weeks — who refuse to let their health, wealth, and intellect fall behind.</p>
+      <div class="hero-cta-row">
+        <button class="hero-cta" onclick="showAuth()">GET ACCESS NOW</button>
+        <div class="hero-price"><strong>$10</strong> one-time · Yours forever</div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-card">
+        <div class="hc-title">Weekly Board · Week 15</div>
+        <div class="hc-domain-row"><span>💪 Health</span><span class="hc-badge hc-g">ON TRACK</span></div>
+        <div class="hc-domain-row"><span>💰 Career & Wealth</span><span class="hc-badge hc-y">WATCH</span></div>
+        <div class="hc-domain-row"><span>🧠 Learning</span><span class="hc-badge hc-g">ON TRACK</span></div>
+        <div class="hc-domain-row"><span>🤝 Relationships</span><span class="hc-badge hc-r">ACT NOW</span></div>
+        <div class="hc-domain-row"><span>📊 Finance</span><span class="hc-badge hc-g">ON TRACK</span></div>
+        <div class="hc-domain-row"><span>🔥 Identity / Edge</span><span class="hc-badge hc-g">ON TRACK</span></div>
+      </div>
+      <div class="floating-badge fb1">● 5/5 sessions this week</div>
+      <div class="floating-badge fb2">DATABASE SYNCED · ALL DEVICES</div>
+    </div>
+  </section>
+
+  <div class="proof-bar">
+    <div class="proof-inner">
+      <div class="proof-item"><div class="proof-num">8</div><div class="proof-label">Life Domains</div></div>
+      <div class="proof-item"><div class="proof-num">12</div><div class="proof-label">SOPs Included</div></div>
+      <div class="proof-item"><div class="proof-num">10min</div><div class="proof-label">Daily Time Budget</div></div>
+      <div class="proof-item"><div class="proof-num">∞</div><div class="proof-label">Devices Synced</div></div>
+    </div>
+  </div>
+
+  <section class="features" id="features">
+    <div class="section-eyebrow">What you get</div>
+    <h2 class="section-title-lg">Every system you need.<br>Nothing you don't.</h2>
+    <p class="section-sub">Built specifically for high-performers with extreme time constraints. Survives deal sprints. Runs in 10 minutes a day.</p>
+    <div class="features-grid">
+      <div class="feature-card"><span class="feature-icon">⚡</span><div class="feature-name">Daily Command</div><div class="feature-desc">Set 3 MITs, log training, capture wins and open loops. 10 minutes. Closed loop every day.</div></div>
+      <div class="feature-card"><span class="feature-icon">📋</span><div class="feature-name">Weekly Board</div><div class="feature-desc">60-minute Sunday review across all 8 domains. Produces decisions — not just data. R/Y/G status on everything.</div></div>
+      <div class="feature-card"><span class="feature-icon">🧠</span><div class="feature-name">Knowledge Engine</div><div class="feature-desc">Capture insights from books and podcasts. Distill to deployable mental models. Track which ones actually changed decisions.</div></div>
+      <div class="feature-card"><span class="feature-icon">🤝</span><div class="feature-name">Relationship CRM</div><div class="feature-desc">Never let a Tier-1 relationship go cold. Automatic overdue alerts. Schedule, log contacts, track next actions.</div></div>
+      <div class="feature-card"><span class="feature-icon">📈</span><div class="feature-name">Live KPI Dashboard</div><div class="feature-desc">Every metric tied to a threshold and an action. Trends over time. If it doesn't change a decision, it's not tracked.</div></div>
+      <div class="feature-card"><span class="feature-icon">🏹</span><div class="feature-name">Quarterly Sprint</div><div class="feature-desc">3 objectives per domain. Progress tracked weekly. Every objective filtered through your identity: does this compound toward dynasty?</div></div>
+    </div>
+  </section>
+
+  <section class="who">
+    <div class="who-inner">
+      <h2 class="who-title">Built for a specific person.</h2>
+      <p class="who-sub">If this sounds like you — this was designed for you.</p>
+      <div class="who-grid">
+        <div class="who-card"><div class="who-card-title">The IB Analyst</div><div class="who-card-desc">80-100 hour weeks. Unpredictable exits. Deal sprints that destroy routines. You need a system that survives the worst weeks, not one that assumes good ones.</div></div>
+        <div class="who-card"><div class="who-card-title">The High-Performer</div><div class="who-card-desc">You train hard. You read. You have goals that go beyond the job. You need a single place to run all of it — without it becoming a second job.</div></div>
+        <div class="who-card"><div class="who-card-title">The Dynasty Builder</div><div class="who-card-desc">You're not just building a career. You're building net worth, intellect, physique, relationships, and reputation simultaneously. You need a system that compounds all of them.</div></div>
+      </div>
+      <div class="who-not">NOT FOR: people looking for motivation · generic productivity advice · another app to ignore<br>FOR: operators who execute and want a closed-loop system that proves it.</div>
+    </div>
+  </section>
+
+  <section class="how" id="how">
+    <div class="section-eyebrow">How it works</div>
+    <h2 class="section-title-lg">Four steps. One system.</h2>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-title">Pay once, access forever</div><div class="step-desc">$10. No subscription. No recurring fees. Yours permanently.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-title">5-minute onboarding</div><div class="step-desc">Set your goals, constraints, and domains. Your OS configures around your life.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-title">Run the daily loop</div><div class="step-desc">10 minutes morning + evening. Every domain covered. Data goes to your private database.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-title">Sunday board meeting</div><div class="step-desc">60 minutes. 8 domains reviewed. Decisions made. Week ahead locked in.</div></div>
+    </div>
+  </section>
+
+  <section class="domains" id="domains">
+    <div class="domains-inner">
+      <div class="section-eyebrow">Coverage</div>
+      <h2 class="section-title-lg">8 domains. Zero gaps.</h2>
+      <p class="section-sub">Every area of your life tracked, reviewed, and optimized — on one screen.</p>
+      <div class="domains-grid">
+        <div class="domain-pill"><span class="domain-pill-icon">💪</span><div class="domain-pill-name">Health</div><div class="domain-pill-desc">Training, sleep, recovery, nutrition</div></div>
+        <div class="domain-pill"><span class="domain-pill-icon">💰</span><div class="domain-pill-name">Career & Wealth</div><div class="domain-pill-desc">IB performance, investing, side hustle</div></div>
+        <div class="domain-pill"><span class="domain-pill-icon">🧠</span><div class="domain-pill-name">Learning</div><div class="domain-pill-desc">Books, mental models, knowledge edge</div></div>
+        <div class="domain-pill"><span class="domain-pill-icon">🤝</span><div class="domain-pill-name">Relationships</div><div class="domain-pill-desc">CRM, loved ones, high-value network</div></div>
+        <div class="domain-pill"><span class="domain-pill-icon">📊</span><div class="domain-pill-name">Finance</div><div class="domain-pill-desc">Net worth, savings rate, investments</div></div>
+        <div class="domain-pill"><span class="domain-pill-icon">🔥</span><div class="domain-pill-name">Identity / Edge</div><div class="domain-pill-desc">Reputation, contrarian insights, brand</div></div>
+        <div class="domain-pill"><span class="domain-pill-icon">🏹</span><div class="domain-pill-name">Strategy</div><div class="domain-pill-desc">Q sprint, 10-year vision, alignment</div></div>
+        <div class="domain-pill"><span class="domain-pill-icon">⚙️</span><div class="domain-pill-name">Operations</div><div class="domain-pill-desc">Calendar, inbox, logistics, admin</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pricing" id="pricing">
+    <div class="section-eyebrow">Pricing</div>
+    <h2 class="section-title-lg">One price. Forever access.</h2>
+    <p class="section-sub">No subscription. No monthly fee. Pay once, use it for life.</p>
+    <div class="price-box">
+      <div class="price-tag">Lifetime Access</div>
+      <div class="price-amount"><sup>$</sup>10</div>
+      <div class="price-period">ONE-TIME PAYMENT · NO RECURRING FEES</div>
+      <div class="price-features">
+        <div class="price-feature"><span class="price-feature-icon">✓</span>Full YOU INC. OS — all 8 domains</div>
+        <div class="price-feature"><span class="price-feature-icon">✓</span>Private database — your data, your control</div>
+        <div class="price-feature"><span class="price-feature-icon">✓</span>Sync across all devices</div>
+        <div class="price-feature"><span class="price-feature-icon">✓</span>12 SOPs + KPI dashboard</div>
+        <div class="price-feature"><span class="price-feature-icon">✓</span>Knowledge engine + Relationship CRM</div>
+        <div class="price-feature"><span class="price-feature-icon">✓</span>All future updates included</div>
+      </div>
+      <button class="price-cta" onclick="showAuth()">GET ACCESS NOW — $10</button>
+      <div class="price-guarantee">Secure payment via Stripe · Instant access after payment</div>
+    </div>
+  </section>
+
+  <section class="faq" id="faq">
+    <div class="section-eyebrow">FAQ</div>
+    <h2 class="section-title-lg" style="text-align:center;margin-bottom:40px">Common questions</h2>
+    <div class="faq-item" onclick="toggleFAQ(this)"><div class="faq-q">Is this really a one-time payment?<span class="faq-chevron">▼</span></div><div class="faq-a">Yes. $10 once. You get permanent access with no recurring fees, ever. All future updates are included.</div></div>
+    <div class="faq-item" onclick="toggleFAQ(this)"><div class="faq-q">Where is my data stored?<span class="faq-chevron">▼</span></div><div class="faq-a">In your own private Supabase database. We cannot see it. Finance data is kept local on your device only — we strongly recommend never logging real financial numbers in a cloud tool.</div></div>
+    <div class="faq-item" onclick="toggleFAQ(this)"><div class="faq-q">Can I use this on my phone?<span class="faq-chevron">▼</span></div><div class="faq-a">Yes. Fully mobile-responsive. Bookmark the URL on your home screen and it works like a native app. All data syncs instantly across devices.</div></div>
+    <div class="faq-item" onclick="toggleFAQ(this)"><div class="faq-q">How much time does this actually take?<span class="faq-chevron">▼</span></div><div class="faq-a">10 minutes daily (5 morning, 5 evening). 60 minutes Sunday. 90 minutes monthly. The system is designed specifically to survive 100-hour IB weeks — it has a Deal Sprint mode that reduces it to 3 inputs per day.</div></div>
+    <div class="faq-item" onclick="toggleFAQ(this)"><div class="faq-q">I'm not in finance — is this still for me?<span class="faq-chevron">▼</span></div><div class="faq-a">The system was built with IB in mind but the architecture works for any high-performer with extreme time constraints — consultants, founders, pre-MBA professionals, anyone building toward dynasty-level outcomes.</div></div>
+    <div class="faq-item" onclick="toggleFAQ(this)"><div class="faq-q">What happens after I pay?<span class="faq-chevron">▼</span></div><div class="faq-a">You're redirected back here, create an account, complete a 5-minute onboarding, and your OS is live. Access is instant.</div></div>
+  </section>
+
+  <footer class="land-footer">
+    <div class="land-footer-logo">YOU <span>INC.</span></div>
+    <div class="land-footer-sub">Personal Operating System · Built for high-performers</div>
+  </footer>
+</div>
+
+<!-- ═══ AUTH ═══ -->
+<div class="screen" id="screen-auth">
+  <div class="auth-screen-wrap">
+    <div class="auth-box">
+      <div class="auth-logo">YOU <span>INC.</span></div>
+      <div class="auth-sub">Create account or sign in</div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('signup',this)">Create Account</button>
+        <button class="auth-tab" onclick="switchAuthTab('login',this)">Sign In</button>
+      </div>
+      <div class="auth-msg" id="auth-msg"></div>
+      <div id="form-signup">
+        <div class="form-row"><label class="form-label">Full Name</label><input type="text" id="au-name" placeholder="Your name" autocomplete="name"></div>
+        <div class="form-row"><label class="form-label">Email</label><input type="email" id="au-email2" placeholder="you@email.com" autocomplete="email"></div>
+        <div class="form-row"><label class="form-label">Password</label><input type="password" id="au-pass2" placeholder="Min. 8 characters" autocomplete="new-password"></div>
+        <button class="btn btn-primary" style="width:100%;margin-top:4px" id="btn-signup" onclick="doSignUp()">CREATE ACCOUNT</button>
+      </div>
+      <div id="form-login" style="display:none">
+        <div class="form-row"><label class="form-label">Email</label><input type="email" id="au-email" placeholder="you@email.com" autocomplete="email"></div>
+        <div class="form-row"><label class="form-label">Password</label><input type="password" id="au-pass" placeholder="••••••••" autocomplete="current-password"></div>
+        <button class="btn btn-primary" style="width:100%;margin-top:4px" id="btn-signin" onclick="doSignIn()">SIGN IN</button>
+      </div>
+      <div class="auth-back" onclick="showLanding()">← Back to home</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PAYWALL ═══ -->
+<div class="screen" id="screen-paywall">
+  <div class="paywall-wrap">
+    <div class="paywall-box">
+      <div class="paywall-eyebrow">One step away</div>
+      <h2 class="paywall-title">Unlock Your<br>Operating System</h2>
+      <p class="paywall-sub">One payment. Lifetime access. Your data, your system, your control.</p>
+      <div class="paywall-price-row">
+        <div class="paywall-price">$10</div>
+        <div class="paywall-price-label">USD</div>
+      </div>
+      <div class="paywall-once">✓ ONE-TIME · NO SUBSCRIPTION · ACCESS FOREVER</div>
+      <div class="paywall-features">
+        <div class="paywall-feature"><span style="color:var(--green)">✓</span>Full OS — all 8 domains active</div>
+        <div class="paywall-feature"><span style="color:var(--green)">✓</span>Private database, synced across all devices</div>
+        <div class="paywall-feature"><span style="color:var(--green)">✓</span>12 SOPs, KPI dashboard, CRM, Knowledge Engine</div>
+        <div class="paywall-feature"><span style="color:var(--green)">✓</span>All future updates included</div>
+        <div class="paywall-feature"><span style="color:var(--green)">✓</span>Instant access after payment</div>
+      </div>
+      <button class="paywall-cta" onclick="goToCheckout()">PAY $10 — GET INSTANT ACCESS</button>
+      <div class="paywall-note">Secure checkout via Stripe. You'll be redirected back after payment.</div>
+      <div class="paywall-signout" onclick="signOut()">Sign out</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ONBOARDING ═══ -->
+<div class="screen" id="screen-onboard">
+  <div class="ob-screen">
+    <div class="ob-box">
+      <div class="ob-progress" id="ob-progress"></div>
+      <div id="ob-content"></div>
+      <div class="ob-nav">
+        <span class="ob-step-lbl" id="ob-lbl">Step 1 of 5</span>
+        <div class="flex gap-8">
+          <button class="btn btn-ghost btn-sm" id="ob-back" onclick="obBack()" style="display:none">BACK</button>
+          <button class="btn btn-primary btn-sm" id="ob-next" onclick="obNext()">NEXT →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL ═══ -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title"></div>
+    <div id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">CANCEL</button>
+      <button class="btn btn-primary btn-sm" id="modal-confirm">CONFIRM</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div class="screen" id="screen-app">
+  <div class="shell">
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+    <nav class="sidebar" id="sidebar">
+      <div class="logo">
+        <div><div class="logo-mark">YOU <span>INC.</span></div><div class="logo-sub">Personal OS</div></div>
+        <button class="hamburger" onclick="closeSidebar()" style="display:flex;padding:4px"><span style="transform:rotate(45deg) translate(4px,4px)"></span><span style="opacity:0"></span><span style="transform:rotate(-45deg) translate(4px,-4px)"></span></button>
+      </div>
+      <div class="nav">
+        <div class="nav-section">Command</div>
+        <div class="nav-item active" onclick="navigate('daily',this)"><span class="nav-icon">⚡</span>Daily Command</div>
+        <div class="nav-item" onclick="navigate('board',this)"><span class="nav-icon">📋</span>Weekly Board</div>
+        <div class="nav-section">Domains</div>
+        <div class="nav-item" onclick="navigate('health',this)"><span class="nav-icon">💪</span>Health<span class="nav-badge nb-g">G</span></div>
+        <div class="nav-item" onclick="navigate('career',this)"><span class="nav-icon">💰</span>Career & Wealth<span class="nav-badge nb-y">Y</span></div>
+        <div class="nav-item" onclick="navigate('learning',this)"><span class="nav-icon">🧠</span>Learning<span class="nav-badge nb-g">G</span></div>
+        <div class="nav-item" onclick="navigate('relationships',this)"><span class="nav-icon">🤝</span>Relationships<span class="nav-badge nb-r">R</span></div>
+        <div class="nav-item" onclick="navigate('finance',this)"><span class="nav-icon">📊</span>Finance<span class="nav-badge nb-g">G</span></div>
+        <div class="nav-item" onclick="navigate('identity',this)"><span class="nav-icon">🔥</span>Identity / Edge<span class="nav-badge nb-g">G</span></div>
+        <div class="nav-section">Strategy</div>
+        <div class="nav-item" onclick="navigate('sprint',this)"><span class="nav-icon">🏹</span>Q Sprint</div>
+        <div class="nav-item" onclick="navigate('sops',this)"><span class="nav-icon">📁</span>SOP Library</div>
+        <div class="nav-item" onclick="navigate('kpis',this)"><span class="nav-icon">📈</span>KPI Dashboard</div>
+        <div class="nav-section">Tools</div>
+        <div class="nav-item" onclick="exportAllCSV()"><span class="nav-icon">📥</span>Export CSV</div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="sidebar-user"><div class="user-avatar" id="user-avatar">?</div><div class="user-name" id="user-name">Loading...</div></div>
+        <div id="footer-date" style="margin-bottom:4px"></div>
+        <div style="color:rgba(82,201,122,.6);font-size:8px;margin-bottom:6px">● DATABASE LIVE</div>
+        <button class="signout-btn" onclick="signOut()">SIGN OUT</button>
+      </div>
+    </nav>
+    <main class="main">
+      <div class="topbar">
+        <div class="topbar-left">
+          <button class="hamburger" id="hamburger-btn" onclick="openSidebar()" style="display:none"><span></span><span></span><span></span></button>
+          <div class="page-title" id="page-title">Daily Command</div>
+          <div class="topbar-date" id="topbar-date"></div>
+        </div>
+        <div class="topbar-right">
+          <span class="status-pill sp-yellow">DEAL SPRINT</span>
+          <span class="status-pill sp-green">LIVE</span>
+        </div>
+      </div>
+      <div class="content">
+
+        <!-- DAILY -->
+        <div class="page active" id="page-daily">
+          <div class="alert yellow" id="rel-alert" style="display:none"><span>⚠</span><span id="rel-alert-text"></span></div>
+          <div class="grid-4 mb-20">
+            <div class="card"><div class="card-title">MITs Complete</div><div class="stat-value" id="stat-mits-done">—</div><div class="stat-label">Today</div></div>
+            <div class="card"><div class="card-title">Trained</div><div class="stat-value" id="stat-trained" style="font-size:22px;color:var(--muted)">—</div><div class="stat-label">Log below</div></div>
+            <div class="card"><div class="card-title">Wins</div><div class="stat-value" id="stat-wins">—</div><div class="stat-label">This week</div></div>
+            <div class="card"><div class="card-title">Atoms</div><div class="stat-value" id="stat-atoms">—</div><div class="stat-label">This week</div></div>
+          </div>
+          <div class="grid-2 mb-20">
+            <div class="card">
+              <div class="section-header"><div class="card-title" style="margin:0">Most Important Tasks</div><button class="section-action" onclick="toggleForm('form-mit')">+ Add</button></div>
+              <div class="inline-form" id="form-mit">
+                <div class="form-row"><label class="form-label">Task</label><input id="inp-mit-text" placeholder="What must happen today?"></div>
+                <div class="flex gap-8 items-center">
+                  <select id="inp-mit-domain" style="flex:1"><option>CAREER</option><option>HEALTH</option><option>LEARNING</option><option>RELATIONS</option><option>FINANCE</option><option>IDENTITY</option><option>OPS</option></select>
+                  <button class="btn btn-primary btn-sm" onclick="addMIT()">ADD</button>
+                </div>
+              </div>
+              <div id="list-mits"><div class="loading">LOADING...</div></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Evening Log</div>
+              <div class="form-row"><label class="form-label">Training</label>
+                <div class="flex gap-8">
+                  <select id="inp-log-muscle" style="flex:1"><option value="">No training</option><option>Chest / Triceps</option><option>Back / Biceps</option><option>Legs</option><option>Shoulders / Arms</option><option>Full Body</option><option>Rest / Recovery</option></select>
+                  <select id="inp-log-intensity" style="width:70px"><option value="">RPE</option><option>6/10</option><option>7/10</option><option>8/10</option><option>9/10</option><option>10/10</option></select>
+                </div>
+              </div>
+              <div class="form-row"><label class="form-label">Sleep Target</label><input type="time" id="inp-log-sleep" value="23:00"></div>
+              <div class="form-row"><label class="form-label">Win of the Day</label><input id="inp-log-win" placeholder="One thing that moved the needle"></div>
+              <div class="form-row"><label class="form-label">Open Loop</label><input id="inp-log-loop" placeholder="Carry forward tomorrow"></div>
+              <button class="btn btn-primary" style="width:100%" onclick="saveEveningLog()">SAVE LOG</button>
+            </div>
+          </div>
+          <div class="card mb-20">
+            <div class="section-header"><div class="card-title" style="margin:0">Wins Log</div><button class="section-action" onclick="toggleForm('form-win')">+ Log Win</button></div>
+            <div class="inline-form" id="form-win">
+              <div class="flex gap-8">
+                <input id="inp-win-text" placeholder="What moved the needle?" style="flex:1">
+                <select id="inp-win-domain" style="width:100px"><option>CAREER</option><option>HEALTH</option><option>LEARNING</option><option>RELATIONS</option><option>FINANCE</option><option>IDENTITY</option></select>
+                <button class="btn btn-primary btn-sm" onclick="addWin()">ADD</button>
+              </div>
+            </div>
+            <div id="list-wins"><div class="loading">LOADING...</div></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Today's Structure</div>
+            <div class="grid-2">
+              <div>
+                <div class="tl-item"><div class="tl-dot navy"></div><div class="tl-time">5:00 AM</div><div class="tl-text">Train — non-negotiable</div><div class="tl-sub">Whatever it takes</div></div>
+                <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">6:30 AM</div><div class="tl-text">Morning Command (5 min)</div><div class="tl-sub">MITs · Calendar · Intention</div></div>
+                <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">Commute</div><div class="tl-text">Knowledge capture</div><div class="tl-sub">Audiobook → atoms</div></div>
+              </div>
+              <div>
+                <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">7 AM – late</div><div class="tl-text">IB — Execute</div><div class="tl-sub">Be the best in the room</div></div>
+                <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">~10 PM</div><div class="tl-text">Evening Log (5 min)</div><div class="tl-sub">MIT · Health · Win · Loop</div></div>
+                <div class="tl-item"><div class="tl-dot green"></div><div class="tl-time">11:00 PM</div><div class="tl-text">Lights out</div><div class="tl-sub">7h minimum. No exceptions.</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WEEKLY BOARD -->
+        <div class="page" id="page-board">
+          <div class="section-header mb-20"><div class="section-title-sm">Weekly Board</div><span class="text-mono text-muted" id="board-week-label"></span></div>
+          <div class="domain-grid">
+            <div class="d-card green" onclick="navTo('health')"><span class="d-icon">💪</span><div class="d-name">Health</div><div class="d-status">ON TRACK</div><div class="d-note">5/5 sessions · 7.2h avg</div></div>
+            <div class="d-card yellow" onclick="navTo('career')"><span class="d-icon">💰</span><div class="d-name">Career</div><div class="d-status">WATCH</div><div class="d-note">2/3 wins · 0 hustle hrs</div></div>
+            <div class="d-card green" onclick="navTo('learning')"><span class="d-icon">🧠</span><div class="d-name">Learning</div><div class="d-status">ON TRACK</div><div class="d-note">7 atoms · 2 deployed</div></div>
+            <div class="d-card red" onclick="navTo('relationships')"><span class="d-icon">🤝</span><div class="d-name">Relationships</div><div class="d-status">ACT NOW</div><div class="d-note">Tier-1 overdue</div></div>
+            <div class="d-card green"><span class="d-icon">📊</span><div class="d-name">Finance</div><div class="d-status">ON TRACK</div><div class="d-note">NW +$1,240 · 34% savings</div></div>
+            <div class="d-card green"><span class="d-icon">⚙️</span><div class="d-name">Operations</div><div class="d-status">ON TRACK</div><div class="d-note">MIT 83% · Inbox zero</div></div>
+            <div class="d-card yellow" onclick="navTo('sprint')"><span class="d-icon">🏹</span><div class="d-name">Strategy</div><div class="d-status">WATCH</div><div class="d-note">2/3 Q objectives</div></div>
+            <div class="d-card green" onclick="navTo('identity')"><span class="d-icon">🔥</span><div class="d-name">Identity</div><div class="d-status">ON TRACK</div><div class="d-note">2 edge entries</div></div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="section-header"><div class="card-title" style="margin:0">Decisions This Week</div><button class="section-action" onclick="toggleForm('form-decision')">+ Add</button></div>
+              <div class="inline-form" id="form-decision">
+                <div class="flex gap-8">
+                  <input id="inp-decision-text" placeholder="What are you committing to?" style="flex:1">
+                  <select id="inp-decision-domain" style="width:100px"><option>CAREER</option><option>HEALTH</option><option>LEARNING</option><option>RELATIONS</option><option>FINANCE</option><option>IDENTITY</option><option>STRATEGY</option></select>
+                  <button class="btn btn-primary btn-sm" onclick="addDecision()">ADD</button>
+                </div>
+              </div>
+              <div id="list-decisions"><div class="loading">LOADING...</div></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Next Week Priorities</div>
+              <table><thead><tr><th>Domain</th><th>Priority</th><th></th></tr></thead>
+                <tbody>
+                  <tr><td style="color:var(--green);font-weight:500">Health</td><td>Maintain 5x</td><td class="text-mono" style="color:var(--green)">✓</td></tr>
+                  <tr><td style="color:var(--yellow);font-weight:500">Career</td><td>Hustle 2hr Sat</td><td class="text-mono" style="color:var(--yellow)">!</td></tr>
+                  <tr><td style="color:var(--green);font-weight:500">Learning</td><td>Next book</td><td class="text-mono" style="color:var(--green)">✓</td></tr>
+                  <tr><td style="color:var(--red);font-weight:500">Relations</td><td>Clear Tier-1 overdue</td><td class="text-mono" style="color:var(--red)">!</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- HEALTH -->
+        <div class="page" id="page-health">
+          <div class="grid-4 mb-20">
+            <div class="card"><div class="card-title">Compliance</div><div class="stat-value" id="h-compliance">—</div><div class="stat-label">7-day rolling</div></div>
+            <div class="card"><div class="card-title">Avg Sleep</div><div class="stat-value" id="h-sleep">—</div><div class="stat-label">7-day rolling</div></div>
+            <div class="card"><div class="card-title">Recovery</div><div class="stat-value" id="h-recovery">—</div><div class="stat-label">Avg / 5</div></div>
+            <div class="card"><div class="card-title">Sessions</div><div class="stat-value" id="h-sessions">—</div><div class="stat-label">This week</div></div>
+          </div>
+          <div class="grid-2 mb-20">
+            <div class="card">
+              <div class="card-title">Log Session</div>
+              <div class="form-row"><label class="form-label">Muscle Group</label><select id="inp-h-muscle"><option value="">Select...</option><option>Chest / Triceps</option><option>Back / Biceps</option><option>Legs</option><option>Shoulders / Arms</option><option>Full Body</option><option>Rest / Recovery</option></select></div>
+              <div class="form-row"><label class="form-label">Intensity (RPE)</label><input type="number" id="inp-h-intensity" min="1" max="10" value="8"></div>
+              <div class="form-row"><label class="form-label">Sleep Hours</label><input type="number" id="inp-h-sleep" step="0.5" min="0" max="12" value="7"></div>
+              <div class="form-row"><label class="form-label">Recovery (1–5)</label><input type="number" id="inp-h-recovery" min="1" max="5" value="3"></div>
+              <div class="form-row"><label class="form-label">Notes</label><textarea id="inp-h-notes" style="min-height:50px"></textarea></div>
+              <button class="btn btn-primary" style="width:100%" onclick="logHealthSession()">LOG SESSION</button>
+            </div>
+            <div class="card">
+              <div class="card-title">KPI Trends</div>
+              <div class="kpi-wrap"><div class="kpi-header"><span class="kpi-name">Training Compliance</span><span class="kpi-val" id="kpi-h-c">—</span></div><div class="kpi-track"><div class="kpi-fill green" id="bar-h-c" style="width:0%"></div></div></div>
+              <div class="kpi-wrap"><div class="kpi-header"><span class="kpi-name">Sleep Average</span><span class="kpi-val" id="kpi-h-s">—</span></div><div class="kpi-track"><div class="kpi-fill green" id="bar-h-s" style="width:0%"></div></div></div>
+              <div class="kpi-wrap"><div class="kpi-header"><span class="kpi-name">Recovery Score</span><span class="kpi-val" id="kpi-h-r">—</span></div><div class="kpi-track"><div class="kpi-fill green" id="bar-h-r" style="width:0%"></div></div></div>
+              <div style="margin-top:16px" class="alert yellow"><span>⚡</span><span>Deal sprint active. Training non-negotiable.</span></div>
+            </div>
+          </div>
+          <div class="card"><div class="card-title">Recent Sessions</div><div id="list-health-logs"><div class="loading">LOADING...</div></div></div>
+        </div>
+
+        <!-- CAREER -->
+        <div class="page" id="page-career">
+          <div class="grid-4 mb-20">
+            <div class="card"><div class="card-title">Wins This Week</div><div class="stat-value" id="stat-cw">—</div><div class="stat-label">Target: ≥3</div><div class="stat-delta" id="delta-cw"></div></div>
+            <div class="card"><div class="card-title">Promo Score</div><div class="stat-value">7.5</div><div class="stat-label">Self / 10</div><div class="stat-delta up">↑ Rising</div></div>
+            <div class="card"><div class="card-title">Hustle Hours</div><div class="stat-value" style="color:var(--red)">0</div><div class="stat-label">This week</div></div>
+            <div class="card"><div class="card-title">Investments</div><div class="stat-value">1</div><div class="stat-label">This month</div></div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="section-header"><div class="card-title" style="margin:0">Career Wins</div><button class="section-action" onclick="toggleForm('form-career-win')">+ Log</button></div>
+              <div class="inline-form" id="form-career-win"><div class="flex gap-8"><input id="inp-career-win" placeholder="Be specific." style="flex:1"><button class="btn btn-primary btn-sm" onclick="addCareerWin()">LOG</button></div></div>
+              <div id="list-career-wins"><div class="loading">LOADING...</div></div>
+            </div>
+            <div class="card">
+              <div class="section-header"><div class="card-title" style="margin:0">Side Hustle Pipeline</div><button class="section-action" onclick="openAddHustleModal()">+ Add</button></div>
+              <table><thead><tr><th>Idea</th><th>Status</th><th>Next</th><th></th></tr></thead>
+                <tbody id="hustle-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- LEARNING -->
+        <div class="page" id="page-learning">
+          <div class="grid-4 mb-20">
+            <div class="card"><div class="card-title">Atoms This Week</div><div class="stat-value" id="stat-aw">—</div><div class="stat-label">Target: ≥5</div></div>
+            <div class="card"><div class="card-title">Deployed</div><div class="stat-value" id="stat-ad">—</div><div class="stat-label">Changed decisions</div></div>
+            <div class="card"><div class="card-title">Total Library</div><div class="stat-value" id="stat-at">—</div><div class="stat-label">Atoms</div></div>
+            <div class="card"><div class="card-title">Books</div><div class="stat-value">1</div><div class="stat-label">This month</div></div>
+          </div>
+          <div class="card">
+            <div class="section-header"><div class="card-title" style="margin:0">Knowledge Engine</div><button class="section-action" onclick="toggleForm('form-atom')">+ Capture Atom</button></div>
+            <div class="inline-form" id="form-atom">
+              <div class="form-row"><label class="form-label">Source</label><input id="inp-atom-source" placeholder="Book / Article / Podcast / Conversation"></div>
+              <div class="form-row"><label class="form-label">Core Insight — your words</label><textarea id="inp-atom-insight" placeholder="What's the insight? 1–2 sentences."></textarea></div>
+              <div class="form-row"><label class="form-label">Deploy By Doing What?</label><input id="inp-atom-deploy" placeholder="When and how will you use this?"></div>
+              <div class="flex gap-8">
+                <select id="inp-atom-domain" style="flex:1"><option>CAREER</option><option>HEALTH</option><option>LEARNING</option><option>STRATEGY</option><option>IDENTITY</option><option>FINANCE</option></select>
+                <button class="btn btn-primary btn-sm" onclick="addAtom()">CAPTURE</button>
+                <button class="btn btn-ghost btn-sm" onclick="toggleForm('form-atom')">CANCEL</button>
+              </div>
+            </div>
+            <div id="list-atoms"><div class="loading">LOADING...</div></div>
+          </div>
+        </div>
+
+        <!-- RELATIONSHIPS -->
+        <div class="page" id="page-relationships">
+          <div class="alert red" id="crm-alert" style="display:none"><span>⚠</span><span id="crm-alert-text"></span></div>
+          <div class="grid-4 mb-20">
+            <div class="card"><div class="card-title">Tier-1 Coverage</div><div class="stat-value" id="crm-t1-pct">—</div><div class="stat-label">This month</div></div>
+            <div class="card"><div class="card-title">Overdue</div><div class="stat-value" id="crm-overdue" style="color:var(--red)">—</div><div class="stat-label">Tier-1 &gt;30d</div></div>
+            <div class="card"><div class="card-title">Total</div><div class="stat-value" id="crm-total">—</div><div class="stat-label">Contacts</div></div>
+            <div class="card"><div class="card-title">Queue</div><div class="stat-value">3</div><div class="stat-label">This week</div></div>
+          </div>
+          <div class="card">
+            <div class="section-header"><div class="card-title" style="margin:0">Relationship CRM</div><button class="section-action" onclick="openAddContactModal()">+ Add Contact</button></div>
+            <div id="list-relationships"><div class="loading">LOADING...</div></div>
+          </div>
+        </div>
+
+        <!-- FINANCE -->
+        <div class="page" id="page-finance">
+          <div class="alert blue mb-20"><span>🔒</span><span>Finance data stays in <strong>local Excel only</strong>. Never log real numbers here.</span></div>
+          <div class="grid-4 mb-20">
+            <div class="card"><div class="card-title">Net Worth</div><div class="stat-value" style="font-size:20px;color:var(--muted)">LOCAL</div><div class="stat-label">Excel only</div></div>
+            <div class="card"><div class="card-title">Savings Rate</div><div class="stat-value">34%</div><div class="stat-label">Self-reported</div><div class="stat-delta up">↑ &gt;30%</div></div>
+            <div class="card"><div class="card-title">Investments</div><div class="stat-value">1</div><div class="stat-label">This month</div></div>
+            <div class="card"><div class="card-title">Hustle P&L</div><div class="stat-value">$0</div><div class="stat-label">Revenue</div></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Monthly Audit — SOP-009</div>
+            <div id="fin-checks">
+              <div class="mit-item"><div class="mit-check" data-key="0" onclick="toggleFC(this)"></div><div class="mit-text">Update all account balances in local Excel</div><span class="mit-tag">MONTHLY</span></div>
+              <div class="mit-item"><div class="mit-check" data-key="1" onclick="toggleFC(this)"></div><div class="mit-text">Calculate net worth delta MoM</div><span class="mit-tag">MONTHLY</span></div>
+              <div class="mit-item"><div class="mit-check" data-key="2" onclick="toggleFC(this)"></div><div class="mit-text">Calculate savings rate (saved ÷ take-home)</div><span class="mit-tag">MONTHLY</span></div>
+              <div class="mit-item"><div class="mit-check" data-key="3" onclick="toggleFC(this)"></div><div class="mit-text">Log investment moves with thesis notes</div><span class="mit-tag">MONTHLY</span></div>
+              <div class="mit-item"><div class="mit-check" data-key="4" onclick="toggleFC(this)"></div><div class="mit-text">Update side hustle P&L</div><span class="mit-tag">MONTHLY</span></div>
+              <div class="mit-item"><div class="mit-check" data-key="5" onclick="toggleFC(this)"></div><div class="mit-text">Write monthly narrative: "This month I ___"</div><span class="mit-tag">MONTHLY</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- IDENTITY -->
+        <div class="page" id="page-identity">
+          <div class="grid-4 mb-20">
+            <div class="card"><div class="card-title">Edges This Week</div><div class="stat-value" id="stat-ew">—</div><div class="stat-label">Target: ≥1</div></div>
+            <div class="card"><div class="card-title">Total Log</div><div class="stat-value" id="stat-et">—</div><div class="stat-label">Insights</div></div>
+            <div class="card"><div class="card-title">Deployed</div><div class="stat-value" id="stat-ed">—</div><div class="stat-label">Used in context</div></div>
+            <div class="card"><div class="card-title">Avg Sharpness</div><div class="stat-value" id="stat-es">—</div><div class="stat-label">/ 10</div></div>
+          </div>
+          <div class="card">
+            <div class="section-header"><div class="card-title" style="margin:0">Identity Edge Log</div><button class="section-action" onclick="toggleForm('form-edge')">+ Log Edge</button></div>
+            <div class="inline-form" id="form-edge">
+              <div class="form-row"><label class="form-label">Contrarian Insight</label><textarea id="inp-edge-insight" placeholder="What would most people get wrong here?"></textarea></div>
+              <div class="form-row"><label class="form-label">Context</label><input id="inp-edge-context" placeholder="Deal room, book, conversation..."></div>
+              <div class="flex gap-8">
+                <div style="flex:1"><label class="form-label">Sharpness (1–10)</label><input type="number" id="inp-edge-sharp" min="1" max="10" value="8"></div>
+                <div style="align-self:flex-end"><button class="btn btn-primary btn-sm" onclick="addEdge()">LOG</button></div>
+                <div style="align-self:flex-end"><button class="btn btn-ghost btn-sm" onclick="toggleForm('form-edge')">CANCEL</button></div>
+              </div>
+            </div>
+            <div id="list-edges"><div class="loading">LOADING...</div></div>
+          </div>
+        </div>
+
+        <!-- SPRINT -->
+        <div class="page" id="page-sprint">
+          <div class="section-header mb-20"><div class="section-title-sm">Q Sprint Plan</div><button class="section-action" onclick="openAddSprintModal()">+ Add Objective</button></div>
+          <div class="grid-2" id="sprint-grid"><div class="loading">LOADING...</div></div>
+        </div>
+
+        <!-- SOPs -->
+        <div class="page" id="page-sops">
+          <div class="section-header mb-20"><div class="section-title-sm">SOP Library</div><span class="text-mono text-muted">Click to expand</span></div>
+          <div class="grid-2" id="sop-grid"></div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="page" id="page-kpis">
+          <div class="section-header mb-20"><div class="section-title-sm">KPI Dashboard</div><span class="text-mono text-muted" id="kpi-week-label"></span></div>
+          <div class="card mb-20">
+            <div class="card-title">System Health</div>
+            <div class="grid-2">
+              <div>
+                <div class="kpi-wrap"><div class="kpi-header"><span class="kpi-name">Training Compliance</span><span class="kpi-val" id="kpi-train">—</span></div><div class="kpi-track"><div class="kpi-fill green" id="bar-train" style="width:0%"></div></div></div>
+                <div class="kpi-wrap"><div class="kpi-header"><span class="kpi-name">Sleep Average</span><span class="kpi-val" id="kpi-sleep">—</span></div><div class="kpi-track"><div class="kpi-fill green" id="bar-sleep" style="width:0%"></div></div></div>
+                <div class="kpi-wrap"><div class="kpi-header"><span class="kpi-name">Recovery Score</span><span class="kpi-val" id="kpi-rec">—</span></div><div class="kpi-track"><div class="kpi-fill green" id="bar-rec" style="width:0%"></div></div></div>
+                <div class="kpi-wrap"><div class="kpi-header"><span class="kpi-name">MIT Completion</span><span class="kpi-val" id="kpi-mit">—</span></div><div class="kpi-track"><div class="kpi-fill green" id="bar-mit" style="width:0%"></div></div></div>
+              </div>
+              <div>
+                <div class="kpi-wrap"><div class="kpi-header"><span class="kpi-name">Knowledge Atoms</span><span class="kpi-val" id="kpi-atoms">—</span></div><div class="kpi-track"><div class="kpi-fill green" id="bar-atoms" style="width:0%"></div></div></div>
+                <div class="kpi-wrap"><div class="kpi-header"><span class="kpi-name">Tier-1 Coverage</span><span class="kpi-val" id="kpi-rel">—</span></div><div class="kpi-track"><div class="kpi-fill red" id="bar-rel" style="width:0%"></div></div></div>
+                <div class="kpi-wrap"><div class="kpi-header"><span class="kpi-name">Career Wins</span><span class="kpi-val" id="kpi-wins">—</span></div><div class="kpi-track"><div class="kpi-fill yellow" id="bar-wins" style="width:0%"></div></div></div>
+                <div class="kpi-wrap"><div class="kpi-header"><span class="kpi-name">Identity Edges</span><span class="kpi-val" id="kpi-edge">—</span></div><div class="kpi-track"><div class="kpi-fill green" id="bar-edge" style="width:0%"></div></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card"><div class="card-title">Action Triggers</div><div id="kpi-actions"><div class="loading">LOADING...</div></div></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+const SUPA_URL='https://ofmztycbixlhwuaydnrr.supabase.co';
+const SUPA_KEY='sb_publishable_dws0QegjVCSs1x0c9TCVBQ_e4i8aca8';
+const STRIPE_KEY='pk_test_51TMLvBRpVRyDbhEgh5mKawpqEPe7Glt06gP0LlKC5I6lG2CERAPPc56CUN8CfnJR8WbfSkYMzxnwtk9oBVa6t0Jm00dXy3Aldh';
+const STRIPE_PAYMENT_LINK='https://buy.stripe.com/test_cNi3cx4Znbpfaa69Qvao800';
+
+const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+let USER=null,USER_ID=null;
+
+const today=()=>new Date().toISOString().split('T')[0];
+const weekAgo=()=>{const d=new Date();d.setDate(d.getDate()-7);return d.toISOString().split('T')[0]};
+const daysSince=(ds)=>{if(!ds)return 999;return Math.floor((new Date()-new Date(ds))/(864e5))};
+const currentMonth=()=>new Date().toISOString().slice(0,7);
+const currentQuarter=()=>{const d=new Date();return`Q${Math.ceil((d.getMonth()+1)/3)}-${d.getFullYear()}`;};
+const fmtDate=(d)=>new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+const el=(id)=>document.getElementById(id);
+
+// ─── SCREENS ─────────────────────────────────────────────────────────────────
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  el('screen-'+id).classList.add('active');
+}
+function showLanding(){showScreen('landing');}
+function showAuth(){showScreen('auth');}
+
+// ─── LANDING ─────────────────────────────────────────────────────────────────
+function toggleFAQ(item){
+  item.classList.toggle('open');
+  item.querySelector('.faq-a').classList.toggle('open');
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────────────────
+function showToast(msg,cls='tg'){
+  const t=document.createElement('div');t.className='toast '+cls;t.textContent=msg;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
+}
+function toggleForm(id){el(id).classList.toggle('open');}
+
+// ─── AUTH ────────────────────────────────────────────────────────────────────
+function switchAuthTab(tab,btn){
+  document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  el('form-signup').style.display=tab==='signup'?'block':'none';
+  el('form-login').style.display=tab==='login'?'block':'none';
+  el('auth-msg').classList.remove('show');
+}
+function showAuthMsg(msg,type='error'){
+  const m=el('auth-msg');m.textContent=msg;m.className='auth-msg show '+type;
+}
+async function doSignUp(){
+  const name=el('au-name').value.trim(),email=el('au-email2').value.trim(),pass=el('au-pass2').value;
+  if(!name||!email||!pass){showAuthMsg('All fields required');return;}
+  if(pass.length<8){showAuthMsg('Password must be 8+ characters');return;}
+  el('btn-signup').textContent='CREATING...';
+  const{error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
+  el('btn-signup').textContent='CREATE ACCOUNT';
+  if(error){showAuthMsg(error.message);return;}
+  showAuthMsg('Check your email to confirm, then sign in.','success');
+}
+async function doSignIn(){
+  const email=el('au-email').value.trim(),pass=el('au-pass').value;
+  if(!email||!pass){showAuthMsg('Email and password required');return;}
+  el('btn-signin').textContent='SIGNING IN...';
+  const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  el('btn-signin').textContent='SIGN IN';
+  if(error){showAuthMsg(error.message);return;}
+  // onAuthStateChange fires SIGNED_IN and routes the user — no reload needed
+}
+async function signOut(){
+  await sb.auth.signOut();USER=null;USER_ID=null;showLanding();
+}
+
+// ─── SESSION + PAYMENT GATE ───────────────────────────────────────────────────
+async function handleSession(session){
+  if(!session||USER)return;
+  USER=session.user;USER_ID=session.user.id;
+  const params=new URLSearchParams(window.location.search);
+  if(params.get('payment')==='success'){
+    await sb.from('profiles').upsert({id:USER_ID,has_paid:true,updated_at:new Date().toISOString()});
+    window.history.replaceState({},'',window.location.pathname);
+  }
+  await routeUser();
+}
+sb.auth.onAuthStateChange(async(event,session)=>{
+  if(event==='SIGNED_IN'||event==='TOKEN_REFRESHED'||event==='INITIAL_SESSION'){await handleSession(session);}
+});
+(async()=>{const{data:{session}}=await sb.auth.getSession();await handleSession(session);})();
+
+async function routeUser(){
+  try{
+    const{data,error}=await sb.from('profiles').select('has_paid,onboarded,full_name').eq('id',USER_ID).single();
+    if(error||!data){
+      // Profile read failed - upsert and send to onboarding
+      await sb.from('profiles').upsert({id:USER_ID,full_name:USER.user_metadata?.full_name||USER.email,has_paid:true,onboarded:false});
+      startOnboarding(USER.user_metadata?.full_name||'');return;
+    }
+    if(!data.has_paid){showScreen('paywall');return;}
+    if(!data.onboarded){startOnboarding(data.full_name||USER.user_metadata?.full_name||'');return;}
+    launchApp(data.full_name||USER.user_metadata?.full_name||'User');
+  }catch(e){
+    // Fallback - just launch the app
+    startOnboarding(USER.user_metadata?.full_name||'');
+  }
+}
+
+// ─── CHECKOUT ────────────────────────────────────────────────────────────────
+function goToCheckout(){
+  // Append return URL with payment success flag
+  const returnUrl=encodeURIComponent(window.location.href.split('?')[0]+'?payment=success');
+  // Stripe payment links support client_reference_id and prefilled email
+  const email=encodeURIComponent(USER.email||'');
+  const url=`${STRIPE_PAYMENT_LINK}?prefilled_email=${email}&client_reference_id=${USER_ID}`;
+  window.location.href=url;
+}
+
+// ─── ONBOARDING ──────────────────────────────────────────────────────────────
+let obStep=0,obData={};
+const OB=[
+  {title:'Welcome to YOU INC.',desc:'Your personal operating system. Takes 3 minutes to set up. Works for life.',fields:`<div class="form-row"><label class="form-label">Your Full Name</label><input id="ob-name" placeholder="First Last" autocomplete="name"></div><div class="form-row"><label class="form-label">Your Role</label><select id="ob-role"><option>IB Analyst</option><option>IB Associate</option><option>Consultant</option><option>Finance Professional</option><option>Founder</option><option>Other</option></select></div><div class="form-row"><label class="form-label">Firm / Company</label><input id="ob-firm" placeholder="Goldman, McKinsey..."></div>`},
+  {title:'Your Top 3 Goals',desc:'What are you building toward in the next 12–18 months?',fields:`<div class="form-row"><label class="form-label">Goal 1</label><input id="ob-g1" placeholder="e.g. Build $500k net worth by Dec 2027"></div><div class="form-row"><label class="form-label">Goal 2</label><input id="ob-g2" placeholder="e.g. VP promotion by 2026"></div><div class="form-row"><label class="form-label">Goal 3</label><input id="ob-g3" placeholder="e.g. Maintain elite physique through IB"></div>`},
+  {title:'Your Constraints',desc:'The system works around your life, not the other way around.',fields:`<div class="form-row"><label class="form-label">Weekly Work Hours</label><select id="ob-hrs"><option>80-100h/week (live deal, constant)</option><option>60-80h/week (some predictability)</option><option>40-60h/week (structured)</option></select></div><div class="form-row"><label class="form-label">Biggest Bottleneck</label><input id="ob-bn" placeholder="e.g. No time, scattered notes..."></div><div class="form-row"><label class="form-label">Energy Peak</label><select id="ob-e"><option>Early morning (5-8am)</option><option>Morning (8-11am)</option><option>Evening (after 8pm)</option><option>Weekend only</option></select></div>`},
+  {title:'Select Your Domains',desc:'All 8 are active. Deselect any you want to exclude.',fields:`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${[['💪','Health'],['💰','Career & Wealth'],['🧠','Learning'],['🤝','Relationships'],['📊','Finance'],['🔥','Identity/Edge'],['🏹','Strategy'],['⚙️','Operations']].map(([i,n])=>`<label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border);border-radius:6px;cursor:pointer;background:var(--surface2);font-size:13px"><input type="checkbox" checked style="width:14px;height:14px;min-width:14px;accent-color:var(--navy)">${i} ${n}</label>`).join('')}</div>`},
+  {title:'You\'re ready.',desc:'Your OS is live. Start with your Daily Command — set 3 MITs for today.',fields:`<div style="text-align:center;padding:24px 0"><div style="font-size:52px;margin-bottom:20px">🏆</div><div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;line-height:2">8 DOMAINS ACTIVE<br>DATABASE CONNECTED<br>ALL DEVICES SYNCED<br>SYSTEM INITIALIZED</div></div>`}
+];
+
+function startOnboarding(prefill){
+  obStep=0;obData={name:prefill};
+  showScreen('onboard');renderOB();
+}
+function renderOB(){
+  const s=OB[obStep];
+  el('ob-progress').innerHTML=OB.map((_,i)=>`<div class="ob-dot ${i<obStep?'done':i===obStep?'active':''}"></div>`).join('');
+  el('ob-lbl').textContent=`Step ${obStep+1} of ${OB.length}`;
+  el('ob-content').innerHTML=`<div class="ob-title">${s.title}</div><div class="ob-desc">${s.desc}</div>${s.fields}`;
+  el('ob-back').style.display=obStep>0?'block':'none';
+  el('ob-next').textContent=obStep===OB.length-1?'LAUNCH OS →':'NEXT →';
+  if(obStep===0&&obData.name&&el('ob-name'))el('ob-name').value=obData.name;
+}
+function obBack(){if(obStep>0){obStep--;renderOB();}}
+async function obNext(){
+  if(obStep===0){obData.name=el('ob-name')?.value.trim()||'';if(!obData.name){showToast('Enter your name','tr');return;}obData.role=el('ob-role')?.value;obData.firm=el('ob-firm')?.value.trim();}
+  if(obStep===1){obData.goals=[el('ob-g1')?.value,el('ob-g2')?.value,el('ob-g3')?.value].filter(Boolean).join(' | ');}
+  if(obStep===2){obData.work_hours=el('ob-hrs')?.value||'';obData.bottleneck=el('ob-bn')?.value.trim()||'';obData.energy_peak=el('ob-e')?.value||'';}
+  if(obStep===3){const cbs=document.querySelectorAll('#ob-content input[type=checkbox]');obData.domains=[...cbs].filter(c=>c.checked).map(c=>c.parentElement.textContent.trim()).join(' | ');}
+  if(obStep===OB.length-1){
+    await sb.from('profiles').upsert({id:USER_ID,full_name:obData.name,role:obData.role,firm:obData.firm,goals:obData.goals,work_hours:obData.work_hours,bottleneck:obData.bottleneck,energy_peak:obData.energy_peak,domains:obData.domains,onboarded:true,has_paid:true,updated_at:new Date().toISOString()});
+    await seedSprint();
+    launchApp(obData.name);return;
+  }
+  obStep++;renderOB();
+}
+async function seedSprint(){
+  const objs=[
+    {domain:'HEALTH',objective_num:1,text:'Maintain 5x/week training through all deal sprints',progress:0},
+    {domain:'HEALTH',objective_num:2,text:'Average ≥7h sleep across 13 weeks',progress:0},
+    {domain:'HEALTH',objective_num:3,text:'Achieve visible physique progression by Q end',progress:0},
+    {domain:'CAREER',objective_num:1,text:'Ship v1 of side hustle — live by Q end',progress:0},
+    {domain:'CAREER',objective_num:2,text:'Become go-to analyst on 1 flagship deal',progress:0},
+    {domain:'CAREER',objective_num:3,text:'Deploy capital into 2 investment positions with thesis',progress:0},
+    {domain:'LEARNING',objective_num:1,text:'Distill 3 books; each produces ≥1 deployed decision',progress:0},
+    {domain:'LEARNING',objective_num:2,text:'Build library of 50+ knowledge atoms',progress:0},
+    {domain:'LEARNING',objective_num:3,text:'Develop 3 signature intellectual positions',progress:0},
+    {domain:'IDENTITY',objective_num:1,text:'Document 10-year wealth architecture',progress:0},
+    {domain:'IDENTITY',objective_num:2,text:'Zero relationship debt — all Tier-1 touched monthly',progress:0},
+    {domain:'IDENTITY',objective_num:3,text:'Develop 5 edge insights that anchor conversations',progress:0},
+  ];
+  await sb.from('sprint_objectives').insert(objs.map(o=>({...o,user_id:USER_ID,quarter:currentQuarter()})));
+}
+
+// ─── LAUNCH APP ───────────────────────────────────────────────────────────────
+function launchApp(name){
+  showScreen('app');
+  const init=(name||'?')[0].toUpperCase();
+  el('user-avatar').textContent=init;
+  el('user-name').textContent=name;
+  const now=new Date();
+  el('topbar-date').textContent='  ·  '+now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  el('footer-date').textContent=currentQuarter().replace('-',' ');
+  el('board-week-label').textContent='Week of '+now.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  el('kpi-week-label').textContent='Week of '+now.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  if(window.innerWidth<=768)el('hamburger-btn').style.display='flex';
+  loadPage('daily');
+}
+
+// ─── MOBILE ──────────────────────────────────────────────────────────────────
+function openSidebar(){el('sidebar').classList.add('open');el('sidebar-overlay').classList.add('open');}
+function closeSidebar(){el('sidebar').classList.remove('open');el('sidebar-overlay').classList.remove('open');}
+window.addEventListener('resize',()=>{if(window.innerWidth>768){closeSidebar();el('hamburger-btn').style.display='none';}else el('hamburger-btn').style.display='flex';});
+
+// ─── NAVIGATION ──────────────────────────────────────────────────────────────
+const PT={daily:'Daily Command',board:'Weekly Board',health:'Health Commander',career:'Career & Wealth',learning:'Chief Learning Officer',relationships:'Relationships CRM',finance:'CFO — Finance',identity:'Identity / Edge',sprint:'Q Sprint Plan',sops:'SOP Library',kpis:'KPI Dashboard'};
+function navigate(id,navEl){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const pg=el('page-'+id);if(pg)pg.classList.add('active');
+  el('page-title').textContent=PT[id]||id;
+  if(navEl)navEl.classList.add('active');
+  closeSidebar();loadPage(id);
+}
+function navTo(id){
+  const navItems=document.querySelectorAll('.nav-item');
+  const map={health:2,career:3,learning:4,relationships:5,finance:6,identity:7,sprint:9,sops:10,kpis:11};
+  navigate(id,navItems[map[id]||0]);
+}
+function loadPage(id){
+  if(id==='daily'){loadMITs();loadWins();loadAtomCount();checkOD();}
+  if(id==='board')loadDecisions();
+  if(id==='health')loadHealth();
+  if(id==='career'){loadCareerWins();loadHustle();}
+  if(id==='learning')loadAtoms();
+  if(id==='relationships')loadRelationships();
+  if(id==='finance')loadFinanceChecks();
+  if(id==='identity')loadEdges();
+  if(id==='sprint')loadSprint();
+  if(id==='sops')loadSOPs();
+  if(id==='kpis')loadKPIs();
+}
+
+// ─── MODAL ───────────────────────────────────────────────────────────────────
+let mCB=null;
+function openModal(title,body,cb,lbl='CONFIRM'){
+  el('modal-title').textContent=title;el('modal-body').innerHTML=body;
+  el('modal-confirm').textContent=lbl;el('modal-confirm').onclick=()=>{if(mCB)mCB();};
+  mCB=cb;el('modal-overlay').classList.add('open');
+}
+function closeModal(){el('modal-overlay').classList.remove('open');}
+el('modal-overlay').addEventListener('click',e=>{if(e.target===el('modal-overlay'))closeModal();});
+
+// ─── DB HELPERS ──────────────────────────────────────────────────────────────
+const q=(t)=>sb.from(t).select('*').eq('user_id',USER_ID);
+const ins=(t,d)=>sb.from(t).insert({...d,user_id:USER_ID});
+const upd=(t,d,id)=>sb.from(t).update(d).eq('id',id).eq('user_id',USER_ID);
+const del=(t,id)=>sb.from(t).delete().eq('id',id).eq('user_id',USER_ID);
+
+// ─── MITs ────────────────────────────────────────────────────────────────────
+async function loadMITs(){
+  const{data}=await q('mits').eq('date',today()).order('created_at');
+  const mits=data||[];const done=mits.filter(m=>m.done).length;
+  el('stat-mits-done').textContent=`${done}/${mits.length}`;
+  if(!mits.length){el('list-mits').innerHTML='<div class="empty-state">No MITs yet. Add up to 3.</div>';return;}
+  el('list-mits').innerHTML=mits.map(m=>`<div class="mit-item"><div class="mit-check${m.done?' checked':''}" onclick="toggleMIT('${m.id}',${!m.done})">${m.done?'✓':''}</div><div class="mit-text${m.done?' done':''}">${m.text}</div><span class="mit-tag">${m.domain}</span><button class="icon-btn" onclick="deleteMIT('${m.id}')">✕</button></div>`).join('');
+}
+async function addMIT(){
+  const text=el('inp-mit-text').value.trim();if(!text)return;
+  const{data}=await q('mits').eq('date',today());
+  if((data||[]).length>=3){showToast('Max 3 MITs per day','tr');return;}
+  await ins('mits',{text,domain:el('inp-mit-domain').value,date:today(),done:false});
+  el('inp-mit-text').value='';el('form-mit').classList.remove('open');await loadMITs();showToast('MIT added ✓');
+}
+async function toggleMIT(id,done){await upd('mits',{done},id);await loadMITs();}
+async function deleteMIT(id){openModal('Delete MIT','<p style="font-size:13px;color:var(--text2)">Delete this task?</p>',async()=>{await del('mits',id);closeModal();await loadMITs();showToast('Deleted');},'DELETE');}
+
+// ─── WINS ────────────────────────────────────────────────────────────────────
+async function loadWins(){
+  const{data}=await q('wins').gte('created_at',weekAgo()+'T00:00:00').order('created_at',{ascending:false});
+  const wins=data||[];el('stat-wins').textContent=wins.length;renderWL('list-wins',wins);
+}
+async function loadCareerWins(){
+  const{data}=await q('wins').gte('created_at',weekAgo()+'T00:00:00').order('created_at',{ascending:false});
+  const all=data||[];const c=all.filter(w=>w.domain==='CAREER');
+  el('stat-cw').textContent=c.length;el('delta-cw').textContent=c.length>=3?'↑ On target':'↓ Below target';
+  el('delta-cw').className='stat-delta '+(c.length>=3?'up':'down');renderWL('list-career-wins',all.slice(0,8));
+}
+function renderWL(id,wins){
+  if(!wins.length){el(id).innerHTML='<div class="empty-state">No wins logged yet.</div>';return;}
+  el(id).innerHTML=wins.map(w=>`<div class="win-entry"><span>${w.text}</span><div class="flex gap-8 items-center"><span class="mit-tag">${w.domain||'GENERAL'}</span><button class="icon-btn" onclick="deleteWin('${w.id}','${id}')">✕</button></div></div>`).join('');
+}
+async function addWin(){
+  const text=el('inp-win-text').value.trim();if(!text)return;
+  await ins('wins',{text,domain:el('inp-win-domain').value});
+  el('inp-win-text').value='';el('form-win').classList.remove('open');await loadWins();showToast('Win logged ✓','tgg');
+}
+async function addCareerWin(){
+  const text=el('inp-career-win').value.trim();if(!text)return;
+  await ins('wins',{text,domain:'CAREER'});el('inp-career-win').value='';el('form-career-win').classList.remove('open');await loadCareerWins();showToast('Win logged ✓','tgg');
+}
+async function deleteWin(id,lid){await del('wins',id);if(lid==='list-career-wins')await loadCareerWins();else await loadWins();showToast('Deleted');}
+
+// ─── EVENING LOG ─────────────────────────────────────────────────────────────
+async function saveEveningLog(){
+  const muscle=el('inp-log-muscle').value;const winText=el('inp-log-win').value.trim();
+  await sb.from('daily_logs').upsert({date:today(),muscle_group:muscle,intensity:el('inp-log-intensity').value,sleep_target:el('inp-log-sleep').value,open_loop:el('inp-log-loop').value.trim(),trained:!!muscle,user_id:USER_ID},{onConflict:'date,user_id'});
+  if(muscle){el('stat-trained').textContent='✓';el('stat-trained').style.color='var(--green)';}
+  if(winText){await ins('wins',{text:winText,domain:'GENERAL'});await loadWins();}
+  el('inp-log-win').value='';el('inp-log-loop').value='';showToast('Log saved ✓','tgg');
+}
+
+// ─── HEALTH ──────────────────────────────────────────────────────────────────
+async function loadHealth(){
+  const{data}=await q('health_logs').gte('date',weekAgo()).order('date',{ascending:false});
+  const logs=data||[];
+  const trained=logs.filter(h=>h.muscle_group&&h.muscle_group!=='Rest / Recovery').length;
+  const c=Math.round(trained/7*100);
+  const sv=logs.filter(h=>h.sleep_hours).map(h=>parseFloat(h.sleep_hours));
+  const as=sv.length?(sv.reduce((a,b)=>a+b,0)/sv.length).toFixed(1):0;
+  const rv=logs.filter(h=>h.recovery_score).map(h=>h.recovery_score);
+  const ar=rv.length?(rv.reduce((a,b)=>a+b,0)/rv.length).toFixed(1):0;
+  el('h-compliance').textContent=c+'%';el('h-sleep').textContent=as+'h';el('h-recovery').textContent=ar;el('h-sessions').textContent=trained;
+  const cc=c>=90?'green':c>=70?'yellow':'red';const sc=parseFloat(as)>=7?'green':parseFloat(as)>=6?'yellow':'red';const rc=parseFloat(ar)>=3.5?'green':parseFloat(ar)>=2.5?'yellow':'red';
+  el('kpi-h-c').textContent=c+'%';el('bar-h-c').style.width=Math.min(c,100)+'%';el('bar-h-c').className='kpi-fill '+cc;
+  el('kpi-h-s').textContent=as+'h';el('bar-h-s').style.width=Math.min(parseFloat(as)/9*100,100)+'%';el('bar-h-s').className='kpi-fill '+sc;
+  el('kpi-h-r').textContent=ar+'/5';el('bar-h-r').style.width=parseFloat(ar)/5*100+'%';el('bar-h-r').className='kpi-fill '+rc;
+  if(!logs.length){el('list-health-logs').innerHTML='<div class="empty-state">No sessions this week.</div>';return;}
+  el('list-health-logs').innerHTML=`<table><thead><tr><th>Date</th><th>Muscle</th><th>RPE</th><th>Sleep</th><th>Recovery</th><th></th></tr></thead><tbody>${logs.map(h=>`<tr><td class="text-mono" style="color:var(--muted)">${fmtDate(h.date)}</td><td>${h.muscle_group||'—'}</td><td>${h.intensity?h.intensity+'/10':'—'}</td><td>${h.sleep_hours?h.sleep_hours+'h':'—'}</td><td>${h.recovery_score?h.recovery_score+'/5':'—'}</td><td><button class="icon-btn" onclick="delHL('${h.id}')">✕</button></td></tr>`).join('')}</tbody></table>`;
+}
+async function logHealthSession(){
+  const muscle=el('inp-h-muscle').value;if(!muscle){showToast('Select muscle group','tr');return;}
+  await ins('health_logs',{date:today(),muscle_group:muscle,intensity:parseInt(el('inp-h-intensity').value)||8,sleep_hours:parseFloat(el('inp-h-sleep').value)||7,recovery_score:parseInt(el('inp-h-recovery').value)||3,notes:el('inp-h-notes').value.trim()});
+  el('inp-h-muscle').value='';el('inp-h-notes').value='';await loadHealth();showToast('Session logged ✓','tgg');
+}
+async function delHL(id){await del('health_logs',id);await loadHealth();showToast('Deleted');}
+
+// ─── ATOMS ───────────────────────────────────────────────────────────────────
+async function loadAtomCount(){const{data}=await q('knowledge_atoms').gte('created_at',weekAgo()+'T00:00:00');el('stat-atoms').textContent=(data||[]).length;}
+async function loadAtoms(){
+  const{data}=await q('knowledge_atoms').order('created_at',{ascending:false});
+  const atoms=data||[];const wk=atoms.filter(a=>new Date(a.created_at)>=new Date(weekAgo())).length;
+  el('stat-aw').textContent=wk;el('stat-ad').textContent=atoms.filter(a=>a.deployed).length;el('stat-at').textContent=atoms.length;
+  if(!atoms.length){el('list-atoms').innerHTML='<div class="empty-state">No atoms yet.</div>';return;}
+  el('list-atoms').innerHTML=atoms.map(a=>`<div class="atom-card"><div class="atom-source">${(a.source||'MANUAL').toUpperCase()} · ${fmtDate(a.created_at)}</div><div class="atom-insight">${a.insight}</div>${a.deploy_action?`<div class="atom-deploy">→ ${a.deploy_action}</div>`:''}<div class="atom-footer"><span class="atom-domain">${a.domain||'GENERAL'}</span><span class="badge-dep ${a.deployed?'yes':'no'}" onclick="toggleAtomD('${a.id}',${!a.deployed})">${a.deployed?'✓ DEPLOYED':'MARK DEPLOYED'}</span><button class="icon-btn" onclick="delAtom('${a.id}')" style="margin-left:6px">✕</button></div></div>`).join('');
+}
+async function addAtom(){
+  const insight=el('inp-atom-insight').value.trim();if(!insight){showToast('Insight required','tr');return;}
+  await ins('knowledge_atoms',{source:el('inp-atom-source').value.trim(),insight,deploy_action:el('inp-atom-deploy').value.trim(),domain:el('inp-atom-domain').value,deployed:false});
+  el('inp-atom-source').value='';el('inp-atom-insight').value='';el('inp-atom-deploy').value='';el('form-atom').classList.remove('open');await loadAtoms();showToast('Atom captured ✓');
+}
+async function toggleAtomD(id,deployed){await upd('knowledge_atoms',{deployed},id);await loadAtoms();if(deployed)showToast('Atom deployed ✓','tgg');}
+async function delAtom(id){await del('knowledge_atoms',id);await loadAtoms();showToast('Deleted');}
+
+// ─── RELATIONSHIPS ───────────────────────────────────────────────────────────
+async function loadRelationships(){
+  const{data}=await q('relationships').order('tier').order('last_contact',{ascending:true});
+  const rels=data||[];el('crm-total').textContent=rels.length;
+  const t1=rels.filter(r=>r.tier===1);const t1ov=t1.filter(r=>daysSince(r.last_contact)>30);
+  const cov=t1.length?Math.round((t1.length-t1ov.length)/t1.length*100):100;
+  el('crm-t1-pct').textContent=cov+'%';el('crm-t1-pct').style.color=cov>=100?'var(--green)':cov>=70?'var(--yellow)':'var(--red)';
+  el('crm-overdue').textContent=t1ov.length;
+  if(t1ov.length){el('crm-alert').style.display='flex';el('crm-alert-text').textContent=`${t1ov.length} Tier-1 contact${t1ov.length>1?'s':''} overdue: ${t1ov.map(r=>r.name).join(', ')}`;}
+  if(!rels.length){el('list-relationships').innerHTML='<div class="empty-state">No contacts yet.</div>';return;}
+  el('list-relationships').innerHTML=rels.map(r=>{
+    const days=daysSince(r.last_contact);const th=r.tier===1?30:r.tier===2?60:90;
+    const bc=days>th?'overdue':days>th*.6?'soon':'ok';
+    return`<div class="person-row"><div class="person-avatar">${(r.name||'?')[0].toUpperCase()}</div><div class="person-info"><div class="person-name">${r.name}</div><div class="person-meta">TIER ${r.tier} · ${(r.relationship_type||'NETWORK').toUpperCase()}${r.last_contact?' · '+fmtDate(r.last_contact):''}</div>${r.next_action?`<div class="person-next">${r.next_action}</div>`:''}</div><div class="person-right"><span class="days-badge ${bc}">${days}d</span><div class="crm-actions"><button class="btn btn-accent btn-sm" onclick="touched('${r.id}','${r.name}')">TOUCHED</button><button class="btn btn-outline btn-sm" onclick="schedModal('${r.id}','${r.name}','${(r.next_action||'').replace(/'/g,"\\'")}')">SCHEDULE</button><button class="btn btn-ghost btn-sm" onclick="editContact(${JSON.stringify(r).replace(/"/g,'&quot;')})">EDIT</button><button class="icon-btn" onclick="delContact('${r.id}','${r.name}')">✕</button></div></div></div>`;
+  }).join('');
+}
+async function checkOD(){
+  if(!USER_ID)return;
+  const{data}=await q('relationships').eq('tier',1);
+  const ov=(data||[]).filter(r=>daysSince(r.last_contact)>30);
+  if(ov.length){el('rel-alert').style.display='flex';el('rel-alert-text').textContent=`${ov.length} Tier-1 contact${ov.length>1?'s':''} overdue: ${ov.map(r=>r.name).join(', ')}. Clear this week.`;}
+}
+async function touched(id,name){await upd('relationships',{last_contact:today()},id);await loadRelationships();showToast(`${name} — contacted ✓`,'tgg');}
+function schedModal(id,name,cur){
+  openModal(`Schedule — ${name}`,`<div class="form-row"><label class="form-label">Next Action</label><textarea id="mn" style="min-height:70px">${cur}</textarea></div>`,async()=>{await upd('relationships',{next_action:el('mn').value.trim()},id);closeModal();await loadRelationships();showToast('Scheduled ✓');},'SAVE');
+}
+function openAddContactModal(){
+  openModal('Add Contact',`<div class="form-row"><label class="form-label">Name</label><input id="mc-n"></div><div class="form-row"><label class="form-label">Tier</label><select id="mc-t"><option value="1">Tier 1 — Monthly</option><option value="2" selected>Tier 2 — 60 days</option><option value="3">Tier 3 — 90 days</option></select></div><div class="form-row"><label class="form-label">Type</label><select id="mc-ty"><option>FAMILY</option><option>CAREER</option><option>PERSONAL</option><option>NETWORK</option><option>MENTOR</option></select></div><div class="form-row"><label class="form-label">Last Contact</label><input type="date" id="mc-l" value="${today()}"></div><div class="form-row"><label class="form-label">Notes</label><textarea id="mc-no" style="min-height:50px"></textarea></div>`,async()=>{
+    const name=el('mc-n').value.trim();if(!name)return;
+    await ins('relationships',{name,tier:parseInt(el('mc-t').value),relationship_type:el('mc-ty').value,last_contact:el('mc-l').value,notes:el('mc-no').value.trim()});
+    closeModal();await loadRelationships();showToast(`${name} added ✓`);
+  },'ADD');
+}
+function editContact(r){
+  openModal('Edit Contact',`<div class="form-row"><label class="form-label">Name</label><input id="me-n" value="${r.name||''}"></div><div class="form-row"><label class="form-label">Tier</label><select id="me-t"><option value="1" ${r.tier===1?'selected':''}>Tier 1</option><option value="2" ${r.tier===2?'selected':''}>Tier 2</option><option value="3" ${r.tier===3?'selected':''}>Tier 3</option></select></div><div class="form-row"><label class="form-label">Type</label><select id="me-ty">${['FAMILY','CAREER','PERSONAL','NETWORK','MENTOR'].map(t=>`<option ${r.relationship_type===t?'selected':''}>${t}</option>`).join('')}</select></div><div class="form-row"><label class="form-label">Last Contact</label><input type="date" id="me-l" value="${r.last_contact||today()}"></div><div class="form-row"><label class="form-label">Next Action</label><input id="me-na" value="${r.next_action||''}"></div><div class="form-row"><label class="form-label">Notes</label><textarea id="me-no" style="min-height:50px">${r.notes||''}</textarea></div>`,async()=>{
+    await upd('relationships',{name:el('me-n').value.trim(),tier:parseInt(el('me-t').value),relationship_type:el('me-ty').value,last_contact:el('me-l').value,next_action:el('me-na').value.trim(),notes:el('me-no').value.trim()},r.id);
+    closeModal();await loadRelationships();showToast('Updated ✓');
+  },'SAVE');
+}
+async function delContact(id,name){
+  openModal('Delete',`<p style="font-size:13px">Remove <strong>${name}</strong>?</p>`,async()=>{await del('relationships',id);closeModal();await loadRelationships();showToast(`${name} removed`);},'DELETE');
+}
+
+// ─── EDGES ───────────────────────────────────────────────────────────────────
+async function loadEdges(){
+  const{data}=await q('edge_logs').order('created_at',{ascending:false});
+  const edges=data||[];const wk=edges.filter(e=>new Date(e.created_at)>=new Date(weekAgo())).length;
+  const sh=edges.filter(e=>e.sharpness).map(e=>e.sharpness);const avg=sh.length?(sh.reduce((a,b)=>a+b,0)/sh.length).toFixed(1):0;
+  el('stat-ew').textContent=wk;el('stat-et').textContent=edges.length;el('stat-ed').textContent=edges.filter(e=>e.deployed).length;el('stat-es').textContent=avg;
+  if(!edges.length){el('list-edges').innerHTML='<div class="empty-state">No edge entries yet.</div>';return;}
+  el('list-edges').innerHTML=edges.map(e=>`<div class="atom-card" style="border-left:3px solid var(--navy);border-radius:0 6px 6px 0"><div class="atom-source">${fmtDate(e.created_at).toUpperCase()}${e.context?' · '+e.context.toUpperCase():''}</div><div class="atom-insight">${e.insight}</div><div class="atom-footer"><span class="atom-domain">IDENTITY</span><span style="font-family:var(--mono);font-size:9px;color:var(--navy);font-weight:600">${e.sharpness||'—'}/10</span><span class="badge-dep ${e.deployed?'yes':'no'}" onclick="toggleED('${e.id}',${!e.deployed})" style="margin-left:auto">${e.deployed?'✓ DEPLOYED':'PENDING'}</span><button class="icon-btn" onclick="delEdge('${e.id}')">✕</button></div></div>`).join('');
+}
+async function addEdge(){
+  const insight=el('inp-edge-insight').value.trim();if(!insight){showToast('Insight required','tr');return;}
+  await ins('edge_logs',{insight,context:el('inp-edge-context').value.trim(),sharpness:parseInt(el('inp-edge-sharp').value)||8,deployed:false});
+  el('inp-edge-insight').value='';el('inp-edge-context').value='';el('form-edge').classList.remove('open');await loadEdges();showToast('Edge logged ✓');
+}
+async function toggleED(id,deployed){await upd('edge_logs',{deployed},id);await loadEdges();if(deployed)showToast('Edge deployed ✓','tgg');}
+async function delEdge(id){await del('edge_logs',id);await loadEdges();showToast('Deleted');}
+
+// ─── DECISIONS ───────────────────────────────────────────────────────────────
+async function loadDecisions(){
+  const{data}=await q('decisions').gte('week_of',weekAgo()).order('created_at');
+  const d=data||[];
+  if(!d.length){el('list-decisions').innerHTML='<div class="empty-state">No decisions yet. The board exists to produce decisions.</div>';return;}
+  el('list-decisions').innerHTML=d.map(x=>`<div class="mit-item"><div class="mit-check${x.done?' checked':''}" onclick="toggleDec('${x.id}',${!x.done})">${x.done?'✓':''}</div><div class="mit-text${x.done?' done':''}">${x.text}</div><span class="mit-tag">${x.domain}</span><button class="icon-btn" onclick="delDec('${x.id}')">✕</button></div>`).join('');
+}
+async function addDecision(){
+  const text=el('inp-decision-text').value.trim();if(!text)return;
+  await ins('decisions',{text,domain:el('inp-decision-domain').value,done:false,week_of:today()});
+  el('inp-decision-text').value='';el('form-decision').classList.remove('open');await loadDecisions();showToast('Decision logged ✓');
+}
+async function toggleDec(id,done){await upd('decisions',{done},id);await loadDecisions();}
+async function delDec(id){await del('decisions',id);await loadDecisions();showToast('Deleted');}
+
+// ─── SPRINT ──────────────────────────────────────────────────────────────────
+async function loadSprint(){
+  const{data}=await q('sprint_objectives').eq('quarter',currentQuarter()).order('domain').order('objective_num');
+  const sprint=data||[];
+  if(!sprint.length){el('sprint-grid').innerHTML='<div class="empty-state" style="grid-column:1/-1">No objectives yet.</div>';return;}
+  const domains=[...new Set(sprint.map(o=>o.domain))];
+  el('sprint-grid').innerHTML=domains.map(domain=>{
+    const objs=sprint.filter(o=>o.domain===domain);
+    return`<div class="card"><div class="card-title">${currentQuarter()} — ${domain}</div>${objs.map(o=>`<div class="sprint-obj"><div class="sprint-obj-header"><div class="sprint-obj-num">0${o.objective_num}</div><div class="sprint-obj-text">${o.text}</div></div><div class="sprint-bar-row"><div class="sprint-progress"><div class="sprint-fill" style="width:${o.progress||0}%;background:${(o.progress||0)>=70?'var(--green)':(o.progress||0)>=40?'var(--gold-mid)':'var(--red)'}"></div></div><span class="sprint-pct">${o.progress||0}%</span><button class="sprint-edit-btn" onclick="progModal('${o.id}','${o.text.replace(/'/g,"\\'")}',${o.progress||0})">EDIT</button></div></div>`).join('')}</div>`;
+  }).join('');
+}
+function progModal(id,text,cur){
+  openModal('Update Progress',`<p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.5">${text}</p><div class="form-row"><label class="form-label">Progress: <span id="pd" style="color:var(--navy);font-weight:600">${cur}%</span></label><input type="range" id="mp" min="0" max="100" value="${cur}" oninput="el('pd').textContent=this.value+'%'" style="margin-top:8px;width:100%"></div>`,async()=>{
+    await upd('sprint_objectives',{progress:parseInt(el('mp').value)},id);closeModal();await loadSprint();showToast('Updated ✓');
+  },'SAVE');
+}
+function openAddSprintModal(){
+  openModal('Add Objective',`<div class="form-row"><label class="form-label">Domain</label><select id="ms-d"><option>HEALTH</option><option>CAREER</option><option>LEARNING</option><option>IDENTITY</option><option>FINANCE</option><option>RELATIONS</option></select></div><div class="form-row"><label class="form-label">Objective</label><textarea id="ms-t" placeholder="What specifically are you committing to?"></textarea></div>`,async()=>{
+    const text=el('ms-t').value.trim();if(!text)return;const domain=el('ms-d').value;
+    const{data}=await q('sprint_objectives').eq('domain',domain).eq('quarter',currentQuarter());
+    await ins('sprint_objectives',{domain,objective_num:(data||[]).length+1,text,progress:0,quarter:currentQuarter()});
+    closeModal();await loadSprint();showToast('Objective added ✓');
+  },'ADD');
+}
+
+// ─── HUSTLE ──────────────────────────────────────────────────────────────────
+async function loadHustle(){
+  const{data}=await q('hustle_ideas').order('created_at');
+  const rows=data||[];
+  el('hustle-tbody').innerHTML=rows.length?rows.map(r=>`<tr><td>${r.name}</td><td><span style="font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:3px;background:var(--surface2);color:var(--muted);border:1px solid var(--border)">${r.status}</span></td><td style="font-size:11px;color:var(--muted)">${r.next_action||''}</td><td><button class="icon-btn" onclick="openEditHustleModal('${r.id}','${r.name.replace(/'/g,"\\'")}','${r.status}','${(r.next_action||'').replace(/'/g,"\\'")}')">✎</button><button class="icon-btn" style="color:var(--red)" onclick="delHustle('${r.id}')">✕</button></td></tr>`).join(''):'<tr><td colspan="4" style="color:var(--muted);font-size:11px;padding:12px 0">No hustles yet. Add your first idea.</td></tr>';
+}
+function openAddHustleModal(){
+  openModal('Add Hustle Idea',`<div class="form-row"><label class="form-label">Idea</label><input id="mh-n"></div><div class="form-row"><label class="form-label">Status</label><select id="mh-s"><option>IDEA</option><option>VALIDATING</option><option>BUILDING</option><option>LIVE</option><option>PAUSED</option><option>KILLED</option></select></div><div class="form-row"><label class="form-label">Next Action</label><input id="mh-nx"></div>`,async()=>{
+    const n=el('mh-n').value.trim();if(!n)return;
+    await ins('hustle_ideas',{name:n,status:el('mh-s').value,next_action:el('mh-nx').value.trim()});
+    closeModal();await loadHustle();showToast(`${n} added ✓`);
+  },'ADD');
+}
+function openEditHustleModal(id,n,s,nx){
+  openModal('Edit Hustle',`<div class="form-row"><label class="form-label">Idea</label><input id="meh-n" value="${n}"></div><div class="form-row"><label class="form-label">Status</label><select id="meh-s">${['IDEA','VALIDATING','BUILDING','LIVE','PAUSED','KILLED'].map(x=>`<option ${x===s?'selected':''}>${x}</option>`).join('')}</select></div><div class="form-row"><label class="form-label">Next Action</label><input id="meh-nx" value="${nx}"></div>`,async()=>{
+    await upd('hustle_ideas',{name:el('meh-n').value.trim(),status:el('meh-s').value,next_action:el('meh-nx').value.trim()},id);
+    closeModal();await loadHustle();showToast('Updated ✓');
+  },'SAVE');
+}
+async function delHustle(id){await del('hustle_ideas',id);await loadHustle();showToast('Removed');}
+
+async function loadFinanceChecks(){
+  const{data}=await sb.from('finance_checks').select('*').eq('user_id',USER_ID).eq('month',currentMonth());
+  const checked=new Set((data||[]).filter(r=>r.checked).map(r=>r.check_key));
+  document.querySelectorAll('#fin-checks .mit-check').forEach(chk=>{
+    const on=checked.has(chk.dataset.key);
+    chk.classList.toggle('checked',on);chk.textContent=on?'✓':'';
+    chk.closest('.mit-item').querySelector('.mit-text').classList.toggle('done',on);
+  });
+}
+async function toggleFC(chk){
+  chk.classList.toggle('checked');const on=chk.classList.contains('checked');
+  chk.textContent=on?'✓':'';chk.closest('.mit-item').querySelector('.mit-text').classList.toggle('done',on);
+  await sb.from('finance_checks').upsert({user_id:USER_ID,check_key:chk.dataset.key,month:currentMonth(),checked:on},{onConflict:'user_id,check_key,month'});
+}
+
+// ─── KPIs ────────────────────────────────────────────────────────────────────
+async function loadKPIs(){
+  const[h,w,a,r,m,e]=await Promise.all([
+    q('health_logs').gte('date',weekAgo()),q('wins').gte('created_at',weekAgo()+'T00:00:00'),
+    q('knowledge_atoms').gte('created_at',weekAgo()+'T00:00:00'),q('relationships').eq('tier',1),
+    q('mits').gte('date',weekAgo()),q('edge_logs').gte('created_at',weekAgo()+'T00:00:00')
+  ]);
+  const hl=h.data||[];const trained=hl.filter(x=>x.muscle_group&&x.muscle_group!=='Rest / Recovery').length;
+  const c=Math.round(trained/7*100);
+  const sv=hl.filter(x=>x.sleep_hours).map(x=>parseFloat(x.sleep_hours));const as=sv.length?(sv.reduce((a,b)=>a+b,0)/sv.length).toFixed(1):0;
+  const rv=hl.filter(x=>x.recovery_score).map(x=>x.recovery_score);const ar=rv.length?(rv.reduce((a,b)=>a+b,0)/rv.length).toFixed(1):0;
+  const am=m.data||[];const mp=am.length?Math.round(am.filter(x=>x.done).length/am.length*100):0;
+  const aw=(a.data||[]).length;const t1=r.data||[];const t1ov=t1.filter(x=>daysSince(x.last_contact)>30).length;
+  const rc=t1.length?Math.round((t1.length-t1ov)/t1.length*100):100;const ww=(w.data||[]).length;const ew=(e.data||[]).length;
+  const set=(k,b,lbl,pct,cl)=>{el(k).textContent=lbl;el(b).style.width=Math.min(pct,100)+'%';el(b).className='kpi-fill '+cl;};
+  set('kpi-train','bar-train',c+'%',c,c>=90?'green':c>=70?'yellow':'red');
+  set('kpi-sleep','bar-sleep',as+'h',parseFloat(as)/9*100,parseFloat(as)>=7?'green':parseFloat(as)>=6?'yellow':'red');
+  set('kpi-rec','bar-rec',ar+'/5',parseFloat(ar)/5*100,parseFloat(ar)>=3.5?'green':parseFloat(ar)>=2.5?'yellow':'red');
+  set('kpi-mit','bar-mit',mp+'%',mp,mp>=80?'green':mp>=60?'yellow':'red');
+  set('kpi-atoms','bar-atoms',aw+'/wk',aw/5*100,aw>=5?'green':aw>=2?'yellow':'red');
+  set('kpi-rel','bar-rel',rc+'%',rc,rc>=100?'green':rc>=70?'yellow':'red');
+  set('kpi-wins','bar-wins',ww+'/wk',ww/3*100,ww>=3?'green':ww>=1?'yellow':'red');
+  set('kpi-edge','bar-edge',ew+'/wk',ew*100,ew>=1?'green':'red');
+  const acts=[];
+  if(t1ov>0)acts.push({kpi:'Tier-1 Coverage',cur:rc+'%',th:'<70%',act:`Contact ${t1.filter(x=>daysSince(x.last_contact)>30).map(x=>x.name).join(', ')} tonight.`,c:'red'});
+  if(ww<1)acts.push({kpi:'Career Wins',cur:'0/wk',th:'<1',act:'Log a win. No wins = visibility problem.',c:'red'});
+  if(aw<2)acts.push({kpi:'Knowledge Atoms',cur:aw+'/wk',th:'<2',act:'One sentence counts. Capture from commute.',c:'yellow'});
+  if(ew<1)acts.push({kpi:'Identity Edge',cur:'0/wk',th:'<1',act:'Log a half-formed idea.',c:'yellow'});
+  if(c<70)acts.push({kpi:'Training',cur:c+'%',th:'<70%',act:'SOP-008 active. Training is non-negotiable.',c:'red'});
+  if(!acts.length)acts.push({kpi:'All Clear',cur:'—',th:'—',act:'All KPIs on track. Keep compounding.',c:'green'});
+  el('kpi-actions').innerHTML=`<table><thead><tr><th>KPI</th><th>Current</th><th>Threshold</th><th>Action Required</th></tr></thead><tbody>${acts.map(x=>`<tr><td style="color:var(--${x.c});font-weight:500">${x.kpi}</td><td class="text-mono" style="color:var(--${x.c})">${x.cur}</td><td class="text-mono" style="color:var(--muted)">${x.th}</td><td style="font-size:12px">${x.act}</td></tr>`).join('')}</tbody></table>`;
+}
+
+// ─── SOPs ────────────────────────────────────────────────────────────────────
+const SOPS=[
+  {id:'SOP-001',name:'Daily Command Routine',freq:'DAILY',time:'10 MIN',owner:'COO',t:false,d:'Morning (5 min): Set MIT×3. MIT #1 must be career-advancing. Check calendar. Set health + identity intention.\nEvening (5 min): Mark each MIT. Log training. Log sleep target. Log one win. Log one open loop.'},
+  {id:'SOP-002',name:'Weekly Board Meeting',freq:'WEEKLY',time:'60 MIN',owner:'CoS',t:false,d:'Pull all 8 domain statuses → R/Y/G → KPI deltas → Make ≥1 decision per domain → Set next week priorities → Run SOP-006.'},
+  {id:'SOP-003',name:'Health Log + Trend',freq:'DAILY',time:'5 MIN',owner:'HEALTH',t:false,d:'Log: training Y/N, muscle group, intensity, sleep hours, recovery 1-5.\nWeekly: Calculate compliance %. Flag if <80% or 2+ consecutive misses.'},
+  {id:'SOP-004',name:'Career Weekly Log',freq:'WEEKLY',time:'10 MIN',owner:'CWO',t:false,d:'Log 3 specific wins. Log feedback. Log deals touched. Log hustle hours/revenue. Self-score promo readiness 1-10.'},
+  {id:'SOP-005',name:'Knowledge: Capture → Distill → Deploy',freq:'PER SESSION',time:'3 MIN',owner:'CLO',t:false,d:'Capture: Source → insight in your words → deploy action → tag domain.\nWeekly: Review atoms. Did any change a decision? Log Y/N. QA: ≥1 deployed per week.'},
+  {id:'SOP-006',name:'Relationship CRM Scan',freq:'WEEKLY',time:'10 MIN',owner:'CRO',t:false,d:'Open CRM. Filter overdue contacts. Queue max 3 outreach actions. Log contact after each touchpoint.\nQA: Zero Tier-1 overdue. Queue cleared Sunday.'},
+  {id:'SOP-007',name:'Inbox Zero Protocol',freq:'DAILY',time:'15 MIN',owner:'COO',t:false,d:'Batch process Outlook once daily. Apply 4D: Do, Defer, Delegate, Delete. Items needing >15 min become MIT.\nQA: Inbox at zero.'},
+  {id:'SOP-008',name:'Deal Sprint Survival Protocol',freq:'TRIGGERED',time:'ONGOING',owner:'CoS',t:true,d:'CURRENTLY ACTIVE. MVOS-only mode. Training non-negotiable. Drop non-Tier-1 touches. Pause hustle. Daily log: training Y/N + one win + one open loop only.\nDeactivate when sprint ends.'},
+  {id:'SOP-009',name:'Monthly Financial Audit',freq:'MONTHLY',time:'30 MIN',owner:'CFO',t:false,d:'LOCAL EXCEL ONLY. Update balances. Calculate NW delta. Calculate savings rate. Log investment moves + thesis. Update P&L. Write monthly narrative.'},
+  {id:'SOP-010',name:'Quarterly Sprint Planning',freq:'QUARTERLY',time:'3 HRS',owner:'CSO',t:false,d:'First Sunday of each quarter. Review prior Q. Set 3 objectives per domain. Filter each through identity test. Calendar milestones.'},
+  {id:'SOP-011',name:'Identity Edge Log',freq:'WEEKLY',time:'5 MIN',owner:'CIO',t:false,d:'Log: Date + Insight + Context + Sharpness 1-10 + Deployed Y/N.\nMonthly: Review top 5. Are these shaping how you show up in rooms that matter?'},
+  {id:'SOP-012',name:'Monthly System Audit',freq:'MONTHLY',time:'30 MIN',owner:'CoS',t:false,d:'Last Sunday of each month.\n1. What am I tracking that doesn\'t change a decision? Eliminate.\n2. What causes friction? Simplify.\n3. What works? Double down.'}
+];
+async function loadSOPs(){
+  const{data}=await sb.from('sop_status').select('*').eq('user_id',USER_ID);
+  const statusMap={};(data||[]).forEach(r=>{statusMap[r.sop_id]=r.active;});
+  renderSOPs(statusMap);
+}
+function renderSOPs(statusMap={}){
+  el('sop-grid').innerHTML=SOPS.map((s,i)=>{
+    const active=statusMap.hasOwnProperty(s.id)?statusMap[s.id]:s.t;
+    return`<div class="sop-card ${active?'triggered':''}" onclick="el('sd${i}').classList.toggle('open')"><div class="sop-id">${s.id}${active?' · ACTIVE':''}</div><div class="sop-name">${s.name}</div><div class="sop-meta"><span class="sop-tag ${active?'red':''}">${s.freq}</span><span class="sop-tag">${s.time}</span><span class="sop-tag">${s.owner}</span><button onclick="event.stopPropagation();toggleSOPActive('${s.id}',${!active})" style="margin-left:auto;font-family:var(--mono);font-size:8px;color:${active?'var(--red)':'var(--muted)'};background:none;border:none;cursor:pointer;padding:0">${active?'DEACTIVATE':'ACTIVATE'}</button></div><div class="sop-detail" id="sd${i}">${s.d.replace(/\n/g,'<br>')}</div></div>`;
+  }).join('');
+}
+async function toggleSOPActive(sopId,active){
+  await sb.from('sop_status').upsert({user_id:USER_ID,sop_id:sopId,active},{onConflict:'user_id,sop_id'});
+  await loadSOPs();showToast(active?'SOP activated ✓':'SOP deactivated');
+}
+
+// ─── EXPORT ──────────────────────────────────────────────────────────────────
+async function exportAllCSV(){
+  showToast('Exporting...');
+  for(const t of['mits','wins','knowledge_atoms','relationships','edge_logs','decisions','health_logs']){
+    const{data}=await q(t).order('created_at',{ascending:false});if(!data||!data.length)continue;
+    const cols=Object.keys(data[0]);const csv=[cols.join(','),...data.map(r=>cols.map(c=>JSON.stringify(r[c]??'')).join(','))].join('\n');
+    const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`youinc-${t}-${today()}.csv`;a.click();
+    await new Promise(r=>setTimeout(r,300));
+  }
+  showToast('Exported ✓','tgg');
+}
+
+// Init hamburger
+if(window.innerWidth<=768)el('hamburger-btn').style.display='flex';
+</script>
+</body>
+</html>
