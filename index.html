@@ -951,7 +951,7 @@ const SUPA_KEY='sb_publishable_dws0QegjVCSs1x0c9TCVBQ_e4i8aca8';
 const STRIPE_KEY='pk_test_51TMLvBRpVRyDbhEgh5mKawpqEPe7Glt06gP0LlKC5I6lG2CERAPPc56CUN8CfnJR8WbfSkYMzxnwtk9oBVa6t0Jm00dXy3Aldh';
 const STRIPE_PAYMENT_LINK='https://buy.stripe.com/test_cNi3cx4Znbpfaa69Qvao800';
 
-const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+const sb=supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{lock:async(name,acquireTimeout,fn)=>await fn()}});
 let USER=null,USER_ID=null;
 
 const today=()=>new Date().toISOString().split('T')[0];
@@ -1033,14 +1033,19 @@ sb.auth.onAuthStateChange(async(event,session)=>{
 });
 (async()=>{const{data:{session}}=await sb.auth.getSession();await handleSession(session);})();
 
+let ROUTING=false;
 async function routeUser(){
+  if(ROUTING){console.log('[YOU INC] routeUser already in flight, skipping');return;}
+  ROUTING=true;
   console.log('[YOU INC] routeUser called, USER_ID:', USER_ID);
   try{
-    const{data,error}=await sb.from('profiles').select('has_paid,onboarded,full_name').eq('id',USER_ID).single();
+    const profilePromise=sb.from('profiles').select('has_paid,onboarded,full_name').eq('id',USER_ID).single();
+    const timeoutPromise=new Promise((_,rej)=>setTimeout(()=>rej(new Error('profile query timeout')),5000));
+    const{data,error}=await Promise.race([profilePromise,timeoutPromise]).catch(e=>({data:null,error:e}));
     console.log('[YOU INC] profile result:', {data,error});
     if(error||!data){
-      console.log('[YOU INC] no profile found, starting onboarding');
-      await sb.from('profiles').upsert({id:USER_ID,full_name:USER.user_metadata?.full_name||USER.email,has_paid:true,onboarded:false});
+      console.log('[YOU INC] no profile found or query failed, starting onboarding');
+      sb.from('profiles').upsert({id:USER_ID,full_name:USER.user_metadata?.full_name||USER.email,has_paid:true,onboarded:false}).then(()=>{}).catch(()=>{});
       startOnboarding(USER.user_metadata?.full_name||'');return;
     }
     if(!data.has_paid){console.log('[YOU INC] not paid, showing paywall');showScreen('paywall');return;}
@@ -1050,7 +1055,7 @@ async function routeUser(){
   }catch(e){
     console.log('[YOU INC] routeUser error:', e);
     startOnboarding(USER.user_metadata?.full_name||'');
-  }
+  }finally{ROUTING=false;}
 }
 
 // ─── CHECKOUT ────────────────────────────────────────────────────────────────
