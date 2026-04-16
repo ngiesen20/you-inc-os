@@ -1011,7 +1011,7 @@ async function doSignIn(){
   const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
   el('btn-signin').textContent='SIGN IN';
   if(error){showAuthMsg(error.message);return;}
-  // onAuthStateChange fires SIGNED_IN and routes the user — no reload needed
+  if(data?.session){USER=data.session.user;USER_ID=data.session.user.id;await routeUser();}
 }
 async function signOut(){
   await sb.auth.signOut();USER=null;USER_ID=null;showLanding();
