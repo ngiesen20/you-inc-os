@@ -1034,18 +1034,21 @@ sb.auth.onAuthStateChange(async(event,session)=>{
 (async()=>{const{data:{session}}=await sb.auth.getSession();await handleSession(session);})();
 
 async function routeUser(){
+  console.log('[YOU INC] routeUser called, USER_ID:', USER_ID);
   try{
     const{data,error}=await sb.from('profiles').select('has_paid,onboarded,full_name').eq('id',USER_ID).single();
+    console.log('[YOU INC] profile result:', {data,error});
     if(error||!data){
-      // Profile read failed - upsert and send to onboarding
+      console.log('[YOU INC] no profile found, starting onboarding');
       await sb.from('profiles').upsert({id:USER_ID,full_name:USER.user_metadata?.full_name||USER.email,has_paid:true,onboarded:false});
       startOnboarding(USER.user_metadata?.full_name||'');return;
     }
-    if(!data.has_paid){showScreen('paywall');return;}
-    if(!data.onboarded){startOnboarding(data.full_name||USER.user_metadata?.full_name||'');return;}
+    if(!data.has_paid){console.log('[YOU INC] not paid, showing paywall');showScreen('paywall');return;}
+    if(!data.onboarded){console.log('[YOU INC] not onboarded');startOnboarding(data.full_name||USER.user_metadata?.full_name||'');return;}
+    console.log('[YOU INC] launching app for:', data.full_name);
     launchApp(data.full_name||USER.user_metadata?.full_name||'User');
   }catch(e){
-    // Fallback - just launch the app
+    console.log('[YOU INC] routeUser error:', e);
     startOnboarding(USER.user_metadata?.full_name||'');
   }
 }
